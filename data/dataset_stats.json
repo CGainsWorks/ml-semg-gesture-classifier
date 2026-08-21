@@ -1,0 +1,245 @@
+{
+  "source": "ninapro_db5",
+  "exercise": "E2",
+  "window_ms": 200.0,
+  "stride_ms": 50.0,
+  "rest_ratio": 1.0,
+  "windows": 74764,
+  "n_channels": 16,
+  "window_samples": 40,
+  "sample_rate_hz": 200,
+  "n_classes": 18,
+  "class_counts": {
+    "0": {
+      "name": "rest",
+      "windows": 4140
+    },
+    "1": {
+      "name": "thumb up",
+      "windows": 4833
+    },
+    "2": {
+      "name": "index and middle extended, others flexed",
+      "windows": 4016
+    },
+    "3": {
+      "name": "ring and little flexed, thumb over fingers",
+      "windows": 4047
+    },
+    "4": {
+      "name": "thumb opposing little finger base",
+      "windows": 4119
+    },
+    "5": {
+      "name": "all fingers abducted",
+      "windows": 3605
+    },
+    "6": {
+      "name": "fingers flexed together in fist",
+      "windows": 3674
+    },
+    "7": {
+      "name": "pointing index",
+      "windows": 4232
+    },
+    "8": {
+      "name": "adduction of extended fingers",
+      "windows": 3986
+    },
+    "9": {
+      "name": "wrist supination (middle finger axis)",
+      "windows": 4386
+    },
+    "10": {
+      "name": "wrist pronation (middle finger axis)",
+      "windows": 4145
+    },
+    "11": {
+      "name": "wrist supination (little finger axis)",
+      "windows": 4710
+    },
+    "12": {
+      "name": "wrist pronation (little finger axis)",
+      "windows": 4221
+    },
+    "13": {
+      "name": "wrist flexion",
+      "windows": 4259
+    },
+    "14": {
+      "name": "wrist extension",
+      "windows": 3769
+    },
+    "15": {
+      "name": "wrist radial deviation",
+      "windows": 3395
+    },
+    "16": {
+      "name": "wrist ulnar deviation",
+      "windows": 4816
+    },
+    "17": {
+      "name": "wrist extension with closed hand",
+      "windows": 4411
+    }
+  },
+  "class_count_min": 3395,
+  "class_count_max": 4833,
+  "subjects": [
+    {
+      "subject": 1,
+      "age": 23,
+      "gender": "m",
+      "height_cm": 187,
+      "weight_kg": 67,
+      "forearm_circumference_cm": 24,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 899.5,
+      "n_samples": 179901,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 2,
+      "age": 28,
+      "gender": "m",
+      "height_cm": 187,
+      "weight_kg": 75,
+      "forearm_circumference_cm": 26,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1019.7,
+      "n_samples": 203945,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 3,
+      "age": 28,
+      "gender": "m",
+      "height_cm": 170,
+      "weight_kg": 63,
+      "forearm_circumference_cm": 25,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 922.1,
+      "n_samples": 184429,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 4,
+      "age": 22,
+      "gender": "f",
+      "height_cm": 156,
+      "weight_kg": 52,
+      "forearm_circumference_cm": 22,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1031.1,
+      "n_samples": 206211,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 5,
+      "age": 28,
+      "gender": "f",
+      "height_cm": 160,
+      "weight_kg": 61,
+      "forearm_circumference_cm": 25,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1030.6,
+      "n_samples": 206127,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 6,
+      "age": 24,
+      "gender": "m",
+      "height_cm": 170,
+      "weight_kg": 65,
+      "forearm_circumference_cm": 23.5,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1027.2,
+      "n_samples": 205431,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 7,
+      "age": 32,
+      "gender": "m",
+      "height_cm": 172,
+      "weight_kg": 78,
+      "forearm_circumference_cm": 28.5,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1045.1,
+      "n_samples": 209024,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 8,
+      "age": 31,
+      "gender": "m",
+      "height_cm": 170,
+      "weight_kg": 74,
+      "forearm_circumference_cm": 26.5,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1031.3,
+      "n_samples": 206270,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 9,
+      "age": 34,
+      "gender": "m",
+      "height_cm": 176,
+      "weight_kg": 68,
+      "forearm_circumference_cm": 27,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1041.2,
+      "n_samples": 208239,
+      "exercise_field_in_file": 1
+    },
+    {
+      "subject": 10,
+      "age": 30,
+      "gender": "m",
+      "height_cm": 173,
+      "weight_kg": 83,
+      "forearm_circumference_cm": 27.5,
+      "laterality": "r",
+      "sensor": "Double Myo",
+      "duration_s": 1070.3,
+      "n_samples": 214062,
+      "exercise_field_in_file": 1
+    }
+  ],
+  "age_range": [
+    22,
+    34
+  ],
+  "forearm_circumference_range_cm": [
+    22,
+    28.5
+  ],
+  "gender_counts": {
+    "m": 8,
+    "f": 2
+  },
+  "total_recording_hours": 2.81,
+  "archive_sha256": {
+    "s1.zip": "dcfecd0f86d437ac53711b662332e90815dd7984881712cf9999d3633e4b62b3",
+    "s2.zip": "d92ec71116a132721282bf9aa3d7464e7cb9d1372fd3b010ff1a35f671b1ed36",
+    "s3.zip": "1ccb876cb57c44f5a21698f9b8b6ef6fb2323c18ef033914d43412899f21ea04",
+    "s4.zip": "21396a0265f8333082f3f2513f032776fbdd397bcc95c0330e97d04d2356ba19",
+    "s5.zip": "061291a93c993681070579f17a83065c6e94332c8299eac73ca208e89e1153b5",
+    "s6.zip": "a789960a52565929c785630c39c69447fb20667c7467a94156751fe0646eb9ca",
+    "s7.zip": "c93ae271f57e039259e2d73944c6dbe079aa2fb9ef90f2f174c57fe45ada3226",
+    "s8.zip": "274d0bff593a3fac74898b6a16de2fc5637a3c337d19c55e253360ea10fd7b9d",
+    "s9.zip": "a473278a33451ec97b4efef1b68b37e3856e2cf1e18dafe11c316856610832af",
+    "s10.zip": "28903042ae3d4ca1dccf9b9c64710eff27670d772ccc5e4bdf7704e1fd4b3a06"
+  }
+}

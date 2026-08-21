@@ -1,0 +1,170 @@
+{
+  "synthetic": false,
+  "representative_windows": 504,
+  "artefacts": {
+    "tflite_float32": {
+      "path": "artifacts\\deploy\\db5\\gesture_cnn_float32.tflite",
+      "bytes": 712788,
+      "operators": {
+        "CONV_2D": 3,
+        "FULLY_CONNECTED": 2,
+        "MAX_POOL_2D": 3,
+        "RESHAPE": 2
+      },
+      "input": {
+        "shape": [
+          1,
+          16,
+          40
+        ],
+        "dtype": "float32",
+        "quantization": [
+          0.0,
+          0
+        ]
+      },
+      "output": {
+        "shape": [
+          1,
+          18
+        ],
+        "dtype": "float32",
+        "quantization": [
+          0.0,
+          0
+        ]
+      },
+      "arena_bytes": 883368
+    },
+    "tflite_int8": {
+      "path": "artifacts\\deploy\\db5\\gesture_cnn_int8.tflite",
+      "bytes": 190264,
+      "operators": {
+        "CONV_2D": 3,
+        "FULLY_CONNECTED": 2,
+        "MAX_POOL_2D": 3,
+        "RESHAPE": 2
+      },
+      "input": {
+        "shape": [
+          1,
+          16,
+          40
+        ],
+        "dtype": "int8",
+        "quantization": [
+          0.10363838076591492,
+          -16
+        ]
+      },
+      "output": {
+        "shape": [
+          1,
+          18
+        ],
+        "dtype": "int8",
+        "quantization": [
+          0.26564401388168335,
+          30
+        ]
+      },
+      "arena_bytes": 221778
+    },
+    "onnx_float32": {
+      "path": "artifacts\\deploy\\db5\\gesture_cnn_float32.onnx",
+      "bytes": 711654,
+      "opset": 17,
+      "operators": {
+        "Constant": 1,
+        "Conv": 3,
+        "Flatten": 1,
+        "Gemm": 2,
+        "MaxPool": 3,
+        "Relu": 4,
+        "Unsqueeze": 1
+      }
+    },
+    "onnx_int8": {
+      "path": "artifacts\\deploy\\db5\\gesture_cnn_int8.onnx",
+      "bytes": 194861,
+      "opset": 17,
+      "operators": {
+        "Conv": 3,
+        "DequantizeLinear": 20,
+        "Flatten": 1,
+        "Gemm": 2,
+        "MaxPool": 3,
+        "QuantizeLinear": 10,
+        "Unsqueeze": 1
+      }
+    }
+  },
+  "accuracy": [
+    {
+      "artefact": "gesture_cnn_float32.onnx",
+      "bytes": 711654,
+      "accuracy": 0.552636965272566,
+      "n_windows": 14657
+    },
+    {
+      "artefact": "gesture_cnn_float32.tflite",
+      "bytes": 712788,
+      "accuracy": 0.5832707921129836,
+      "n_windows": 14657
+    },
+    {
+      "artefact": "gesture_cnn_int8.onnx",
+      "bytes": 194861,
+      "accuracy": 0.5548202224193218,
+      "n_windows": 14657
+    },
+    {
+      "artefact": "gesture_cnn_int8.tflite",
+      "bytes": 190264,
+      "accuracy": 0.5821791635396056,
+      "n_windows": 14657
+    }
+  ],
+  "architecture": {
+    "input_shape_channels_time": [
+      16,
+      40
+    ],
+    "conv_channels": [
+      32,
+      64,
+      64
+    ],
+    "kernel_electrodes_time": [
+      3,
+      5
+    ],
+    "pooled_shape_electrodes_time": [
+      2,
+      5
+    ],
+    "dense_units": 128,
+    "dropout": 0.4,
+    "n_classes": 18,
+    "parameters": 177490,
+    "macs_per_inference": 7764224
+  },
+  "quantisation_cost": {
+    "tflite": {
+      "float32_accuracy": 0.5832707921129836,
+      "int8_accuracy": 0.5821791635396056,
+      "accuracy_delta": -0.0010916285733779674,
+      "float32_bytes": 712788,
+      "int8_bytes": 190264,
+      "size_ratio": 0.26692929735068494
+    },
+    "onnx": {
+      "float32_accuracy": 0.552636965272566,
+      "int8_accuracy": 0.5548202224193218,
+      "accuracy_delta": 0.0021832571467558237,
+      "float32_bytes": 711654,
+      "int8_bytes": 194861,
+      "size_ratio": 0.27381424119024134
+    }
+  }
+}

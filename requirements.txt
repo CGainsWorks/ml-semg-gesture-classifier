@@ -1,0 +1,17 @@
+# Runtime dependencies, pinned. These are the versions every number in the
+# README was produced on.
+numpy==1.26.4
+scipy==1.14.1
+scikit-learn==1.5.2
+pandas==2.2.3
+matplotlib==3.9.2
+PyYAML==6.0.2
+
+# Deep learning. Both frameworks are required: the point of the repository is
+# to compare them on the same problem.
+tensorflow==2.18.1
+torch==2.6.0
+
+# Quantised deployment.
+onnx==1.17.0
+onnxruntime==1.20.1

@@ -1,0 +1,141 @@
+{
+  "label": "host",
+  "threads": 1,
+  "synthetic": false,
+  "host": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "machine": "AMD64",
+    "python": "3.12.0"
+  },
+  "results": [
+    {
+      "artefact": "artifacts\\deploy\\db5\\gesture_cnn_float32.onnx",
+      "backend": "onnx",
+      "size_bytes": 711654,
+      "iterations": 2000,
+      "mean_ms": 0.14515119999999998,
+      "median_ms": 0.1367,
+      "p90_ms": 0.1558,
+      "p99_ms": 0.2601,
+      "min_ms": 0.1342,
+      "max_ms": 0.4088,
+      "stdev_ms": 0.024368213588130305,
+      "host": {
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+        "machine": "AMD64",
+        "python": "3.12.0"
+      },
+      "budget": {
+        "window_fill_ms": 200.0,
+        "majority_vote_ms": 0.0,
+        "inference_p99_ms": 0.2601,
+        "io_allowance_ms": 20.0,
+        "total_ms": 220.2601,
+        "budget_ms": 300.0,
+        "headroom_ms": 79.7399,
+        "meets_budget": true,
+        "max_decision_rate_hz": 3844.6751249519416,
+        "required_decision_rate_hz": 20.0,
+        "keeps_up_with_stride": true
+      }
+    },
+    {
+      "artefact": "artifacts\\deploy\\db5\\gesture_cnn_int8.onnx",
+      "backend": "onnx",
+      "size_bytes": 194861,
+      "iterations": 2000,
+      "mean_ms": 0.12169379999999999,
+      "median_ms": 0.1156,
+      "p90_ms": 0.1347,
+      "p99_ms": 0.1826,
+      "min_ms": 0.1137,
+      "max_ms": 0.241,
+      "stdev_ms": 0.013314496590924303,
+      "host": {
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+        "machine": "AMD64",
+        "python": "3.12.0"
+      },
+      "budget": {
+        "window_fill_ms": 200.0,
+        "majority_vote_ms": 0.0,
+        "inference_p99_ms": 0.1826,
+        "io_allowance_ms": 20.0,
+        "total_ms": 220.1826,
+        "budget_ms": 300.0,
+        "headroom_ms": 79.81739999999999,
+        "meets_budget": true,
+        "max_decision_rate_hz": 5476.45125958379,
+        "required_decision_rate_hz": 20.0,
+        "keeps_up_with_stride": true
+      }
+    },
+    {
+      "artefact": "artifacts\\deploy\\db5\\gesture_cnn_float32.tflite",
+      "backend": "tflite",
+      "size_bytes": 712788,
+      "iterations": 2000,
+      "mean_ms": 0.13901925,
+      "median_ms": 0.1268,
+      "p90_ms": 0.1567,
+      "p99_ms": 0.3351,
+      "min_ms": 0.1231,
+      "max_ms": 0.5749,
+      "stdev_ms": 0.03744695209958047,
+      "host": {
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+        "machine": "AMD64",
+        "python": "3.12.0"
+      },
+      "budget": {
+        "window_fill_ms": 200.0,
+        "majority_vote_ms": 0.0,
+        "inference_p99_ms": 0.3351,
+        "io_allowance_ms": 20.0,
+        "total_ms": 220.3351,
+        "budget_ms": 300.0,
+        "headroom_ms": 79.66489999999999,
+        "meets_budget": true,
+        "max_decision_rate_hz": 2984.1838257236645,
+        "required_decision_rate_hz": 20.0,
+        "keeps_up_with_stride": true
+      }
+    },
+    {
+      "artefact": "artifacts\\deploy\\db5\\gesture_cnn_int8.tflite",
+      "backend": "tflite",
+      "size_bytes": 190264,
+      "iterations": 2000,
+      "mean_ms": 0.2165433,
+      "median_ms": 0.2097,
+      "p90_ms": 0.2335,
+      "p99_ms": 0.3138,
+      "min_ms": 0.2031,
+      "max_ms": 0.3746,
+      "stdev_ms": 0.0204672829155453,
+      "host": {
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+        "machine": "AMD64",
+        "python": "3.12.0"
+      },
+      "budget": {
+        "window_fill_ms": 200.0,
+        "majority_vote_ms": 0.0,
+        "inference_p99_ms": 0.3138,
+        "io_allowance_ms": 20.0,
+        "total_ms": 220.3138,
+        "budget_ms": 300.0,
+        "headroom_ms": 79.68620000000001,
+        "meets_budget": true,
+        "max_decision_rate_hz": 3186.7431485022303,
+        "required_decision_rate_hz": 20.0,
+        "keeps_up_with_stride": true
+      }
+    }
+  ]
+}

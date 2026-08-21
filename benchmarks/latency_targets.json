@@ -1,0 +1,93 @@
+{
+  "synthetic": false,
+  "disclaimer": "Estimates, not measurements. No STM32 or Jetson was available. Every row is arithmetic from the MAC count and a documented throughput assumption; see src/embedded/estimate.py and benchmarks/README.md.",
+  "artefact": {
+    "macs": 7764224,
+    "parameters": 177490,
+    "model_bytes": 190264,
+    "arena_bytes": 221778
+  },
+  "measured_host": {
+    "label": "host",
+    "host": {
+      "platform": "Windows-11-10.0.26200-SP0",
+      "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+      "machine": "AMD64",
+      "python": "3.12.0"
+    },
+    "median_ms": 0.2097,
+    "p99_ms": 0.3138,
+    "measured": true
+  },
+  "estimates": [
+    {
+      "target": "STM32F411 (Cortex-M4F, 100 MHz)",
+      "runtime": "TFLite Micro + CMSIS-NN",
+      "clock_mhz": 100.0,
+      "estimated_inference_ms": 83.18811428571429,
+      "window_fill_ms": 200.0,
+      "majority_vote_ms": 0.0,
+      "io_allowance_ms": 20.0,
+      "estimated_total_ms": 303.1881142857143,
+      "budget_ms": 300.0,
+      "estimated_headroom_ms": -3.1881142857142777,
+      "estimated_to_meet_budget": false,
+      "memory": {
+        "model_kib": 185.8046875,
+        "flash_kib": 512,
+        "fits_flash": true,
+        "arena_upper_bound_kib": 216.580078125,
+        "ram_kib": 128,
+        "fits_ram_upper_bound": false
+      },
+      "note": "No cache. Weights execute from flash, which costs wait states.",
+      "measured": false
+    },
+    {
+      "target": "STM32H743 (Cortex-M7, 480 MHz)",
+      "runtime": "TFLite Micro + CMSIS-NN",
+      "clock_mhz": 480.0,
+      "estimated_inference_ms": 12.580918518518518,
+      "window_fill_ms": 200.0,
+      "majority_vote_ms": 0.0,
+      "io_allowance_ms": 20.0,
+      "estimated_total_ms": 232.58091851851853,
+      "budget_ms": 300.0,
+      "estimated_headroom_ms": 67.41908148148147,
+      "estimated_to_meet_budget": true,
+      "memory": {
+        "model_kib": 185.8046875,
+        "flash_kib": 2048,
+        "fits_flash": true,
+        "arena_upper_bound_kib": 216.580078125,
+        "ram_kib": 1024,
+        "fits_ram_upper_bound": true
+      },
+      "note": "Dual-issue with an L1 cache; the whole model fits in tightly coupled RAM.",
+      "measured": false
+    },
+    {
+      "target": "Jetson Nano (Cortex-A57, 1.43 GHz, CPU only)",
+      "runtime": "ONNX Runtime, one thread",
+      "clock_mhz": 1430.0,
+      "estimated_inference_ms": 1.1763975757575758,
+      "window_fill_ms": 200.0,
+      "majority_vote_ms": 0.0,
+      "io_allowance_ms": 20.0,
+      "estimated_total_ms": 221.17639757575756,
+      "budget_ms": 300.0,
+      "estimated_headroom_ms": 78.82360242424244,
+      "estimated_to_meet_budget": true,
+      "memory": {
+        "model_kib": 185.8046875,
+        "flash_kib": 16777216,
+        "fits_flash": true,
+        "arena_upper_bound_kib": 216.580078125,
+        "ram_kib": 4194304,
+        "fits_ram_upper_bound": true
+      },
+      "note": "CPU only. The 128-core GPU would be faster and is not modelled here.",
+      "measured": false
+    }
+  ]
+}

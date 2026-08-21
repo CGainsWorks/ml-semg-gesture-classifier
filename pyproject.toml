@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml-semg-gesture-classifier"
+version = "1.0.0"
+description = "Real-time sEMG gesture classification for prosthetic control, from Ninapro DB5 to a quantised embedded model"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "CGainsWorks" }]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+filterwarnings = [
+    # Deprecation noise from TensorFlow's bundled TFLite interpreter and from
+    # matplotlib's pyparsing dependency. Neither is actionable here.
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning:tensorflow.*",
+    "ignore::UserWarning:sklearn.*",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".venv", "artifacts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    # Assigning a lambda is clearer than a def in the small dispatch tables here.
+    "E731",
+    # `zip(strict=)` is 3.10+, and 3.10 is the floor rather than the target.
+    "B905",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests import inside functions on purpose, to keep TensorFlow out of the
+# import path of tests that do not need it.
+"tests/*" = ["B008"]

@@ -1,0 +1,90 @@
+{
+  "synthetic": false,
+  "fold_index": 0,
+  "results": {
+    "within_subject": [
+      {
+        "variant": "conv1d",
+        "train_accuracy": 0.8623995853848148,
+        "val_accuracy": 0.5394736842105263,
+        "test_accuracy": 0.5370813397129187,
+        "overfit_gap": 0.32531824567189604,
+        "parameters": 77170
+      },
+      {
+        "variant": "conv2d",
+        "train_accuracy": 0.8245659497279088,
+        "val_accuracy": 0.6354489164086687,
+        "test_accuracy": 0.5972886762360446,
+        "overfit_gap": 0.2272772734918641,
+        "parameters": 177490
+      },
+      {
+        "variant": "conv2d_circular",
+        "train_accuracy": 0.8170510494946878,
+        "val_accuracy": 0.628482972136223,
+        "test_accuracy": 0.6064593301435407,
+        "overfit_gap": 0.21059171935114707,
+        "parameters": 177490
+      },
+      {
+        "variant": "conv2d_noaug",
+        "train_accuracy": 0.8875356309924851,
+        "val_accuracy": 0.621517027863777,
+        "test_accuracy": 0.6411483253588517,
+        "overfit_gap": 0.24638730563363342,
+        "parameters": 177490
+      },
+      {
+        "variant": "conv2d_electrode_shift",
+        "train_accuracy": 0.5270795542886758,
+        "val_accuracy": 0.4458204334365325,
+        "test_accuracy": 0.4350079744816587,
+        "overfit_gap": 0.09207157980701713,
+        "parameters": 177490
+      }
+    ],
+    "subject_independent": [
+      {
+        "variant": "conv1d",
+        "train_accuracy": 0.6794036464690087,
+        "val_accuracy": 0.505054881571346,
+        "test_accuracy": 0.2839796318057188,
+        "overfit_gap": 0.39542401466328997,
+        "parameters": 77170
+      },
+      {
+        "variant": "conv2d",
+        "train_accuracy": 0.7267964774583623,
+        "val_accuracy": 0.5644858463316003,
+        "test_accuracy": 0.2613918266092179,
+        "overfit_gap": 0.4654046508491444,
+        "parameters": 177490
+      },
+      {
+        "variant": "conv2d_circular",
+        "train_accuracy": 0.6363858272152018,
+        "val_accuracy": 0.542894280762565,
+        "test_accuracy": 0.24272098185141663,
+        "overfit_gap": 0.3936648453637851,
+        "parameters": 177490
+      },
+      {
+        "variant": "conv2d_noaug",
+        "train_accuracy": 0.7633738287924592,
+        "val_accuracy": 0.5896880415944541,
+        "test_accuracy": 0.24050137093615354,
+        "overfit_gap": 0.5228724578563057,
+        "parameters": 177490
+      },
+      {
+        "variant": "conv2d_electrode_shift",
+        "train_accuracy": 0.39656758735940817,
+        "val_accuracy": 0.3425043327556326,
+        "test_accuracy": 0.29168298733516124,
+        "overfit_gap": 0.10488460002424693,
+        "parameters": 177490
+      }
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 480" width="1120" height="480" font-family="'DejaVu Sans','Helvetica Neue',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5b6472"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1120" height="480" fill="#ffffff"/>
+
+  <text x="20" y="26" font-size="12" font-weight="700" fill="#8a94a3" letter-spacing="1.2">SIGNAL PATH: WHAT RUNS ON THE DEVICE</text>
+
+  <rect x="20" y="42" width="150" height="72" rx="6" fill="#f7f8fa" stroke="#5b6472" stroke-width="1.6"/>
+  <text x="34" y="66" font-size="14" font-weight="600" fill="#1d2430">Two Myo bands</text>
+  <text x="34" y="85" font-size="11.5" fill="#5b6472">16 electrodes</text>
+  <text x="34" y="102" font-size="11.5" fill="#5b6472">200 Hz</text>
+
+  <path d="M 174 78 L 206 78" stroke="#5b6472" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="212" y="42" width="158" height="72" rx="6" fill="#f7f8fa" stroke="#5b6472" stroke-width="1.6"/>
+  <text x="226" y="66" font-size="14" font-weight="600" fill="#1d2430">Bandpass</text>
+  <text x="226" y="85" font-size="11.5" fill="#5b6472">10 to 99 Hz, order 4</text>
+  <text x="226" y="102" font-size="11.5" fill="#5b6472">causal, Butterworth</text>
+
+  <path d="M 374 78 L 406 78" stroke="#5b6472" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="412" y="42" width="158" height="72" rx="6" fill="#eef3fb" stroke="#3b7dd8" stroke-width="1.8"/>
+  <text x="426" y="66" font-size="14" font-weight="600" fill="#1d2430">Window</text>
+  <text x="426" y="85" font-size="11.5" fill="#5b6472">200 ms, 50 ms stride</text>
+  <text x="426" y="102" font-size="11.5" fill="#5b6472">16 by 40 samples</text>
+
+  <path d="M 574 78 L 606 78" stroke="#5b6472" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="612" y="42" width="184" height="72" rx="6" fill="#eef3fb" stroke="#3b7dd8" stroke-width="1.8"/>
+  <text x="626" y="66" font-size="14" font-weight="600" fill="#1d2430">2-D CNN, int8</text>
+  <text x="626" y="85" font-size="11.5" fill="#5b6472">3 conv blocks, 2 dense</text>
+  <text x="626" y="102" font-size="11.5" fill="#5b6472">177k weights, 7.8M MACs</text>
+
+  <path d="M 800 78 L 832 78" stroke="#5b6472" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <rect x="838" y="42" width="184" height="72" rx="6" fill="#f7f8fa" stroke="#5b6472" stroke-width="1.6"/>
+  <text x="852" y="66" font-size="14" font-weight="600" fill="#1d2430">Gesture</text>
+  <text x="852" y="85" font-size="11.5" fill="#5b6472">18 classes and confidence</text>
+  <text x="852" y="102" font-size="11.5" fill="#5b6472">no majority vote</text>
+
+  <text x="20" y="164" font-size="12" font-weight="700" fill="#8a94a3" letter-spacing="1.2">LATENCY BUDGET: 300 ms FROM INTENTION TO MOVEMENT</text>
+
+  <rect x="20" y="178" width="980" height="34" rx="5" fill="#eef1f5" stroke="#c6ccd6"/>
+  <rect x="20" y="178" width="653" height="34" rx="5" fill="#3b7dd8"/>
+  <rect x="675" y="178" width="65" height="34" fill="#8a94a3"/>
+  <line x1="1000" y1="168" x2="1000" y2="222" stroke="#d84c3b" stroke-width="2" stroke-dasharray="4 3"/>
+
+  <text x="36" y="200" font-size="12.5" font-weight="700" fill="#ffffff">window fill  200 ms</text>
+  <text x="683" y="200" font-size="10" font-weight="700" fill="#ffffff">I/O 20ms</text>
+  <text x="752" y="200" font-size="11.5" fill="#5b6472">inference under 0.1 ms, measured</text>
+  <text x="1008" y="196" font-size="12" font-weight="700" fill="#d84c3b">300 ms</text>
+  <text x="1008" y="212" font-size="11.5" fill="#5b6472">budget</text>
+
+  <text x="20" y="240" font-size="12.5" font-weight="700" fill="#2f8f5b">Total 220 ms, with 80 ms of headroom.</text>
+  <text x="304" y="240" font-size="11.5" fill="#5b6472">Inference is 0.05% of it. Filling the window is the whole cost.</text>
+
+  <text x="20" y="288" font-size="12" font-weight="700" fill="#8a94a3" letter-spacing="1.2">EVALUATION: THREE PROTOCOLS, THE HARDEST ONE LEADS</text>
+
+  <rect x="20" y="302" width="310" height="102" rx="6" fill="#f7f8fa" stroke="#5b6472" stroke-width="1.6"/>
+  <text x="34" y="326" font-size="14" font-weight="600" fill="#1d2430">Within-subject</text>
+  <text x="34" y="346" font-size="11.5" fill="#5b6472">One person. Repetitions 1, 3, 4 and 6</text>
+  <text x="34" y="363" font-size="11.5" fill="#5b6472">train, 2 and 5 test. What most papers</text>
+  <text x="34" y="380" font-size="11.5" fill="#5b6472">lead with, and it presumes a wearer who</text>
+  <text x="34" y="397" font-size="11.5" fill="#5b6472">has already sat through a full session.</text>
+
+  <rect x="346" y="302" width="310" height="102" rx="6" fill="#fdf0ee" stroke="#d84c3b" stroke-width="1.8"/>
+  <text x="360" y="326" font-size="14" font-weight="600" fill="#1d2430">Subject-independent</text>
+  <text x="360" y="346" font-size="11.5" fill="#5b6472">Leave one subject out, ten folds. Day</text>
+  <text x="360" y="363" font-size="11.5" fill="#5b6472">one for a wearer the model has never</text>
+  <text x="360" y="380" font-size="11.5" fill="#5b6472">met, which is what a prosthesis faces.</text>
+  <text x="360" y="397" font-size="11.5" font-weight="700" fill="#d84c3b">This is the headline number.</text>
+
+  <rect x="672" y="302" width="342" height="102" rx="6" fill="#f7f8fa" stroke="#5b6472" stroke-width="1.6"/>
+  <text x="686" y="326" font-size="14" font-weight="600" fill="#1d2430">Subject-independent, calibrated</text>
+  <text x="686" y="346" font-size="11.5" fill="#5b6472">Leave one out, then fine-tune on one</text>
+  <text x="686" y="363" font-size="11.5" fill="#5b6472">repetition the new wearer demonstrates,</text>
+  <text x="686" y="380" font-size="11.5" fill="#5b6472">and test on the ones they did not. The</text>
+  <text x="686" y="397" font-size="11.5" fill="#5b6472">fitting appointment, as an experiment.</text>
+
+  <text x="20" y="440" font-size="11.5" fill="#5b6472">Normalisation statistics are fit on the training fold and nowhere else. Validation is split by whole repetitions, never at random. Windows</text>
+  <text x="20" y="458" font-size="11.5" fill="#5b6472">straddling a label change are dropped. Each of those is asserted by a test, because a leak looks exactly like a good result.</text>
+</svg>

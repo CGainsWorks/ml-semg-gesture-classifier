@@ -1,0 +1,35 @@
+services:
+  # The default: the whole pipeline on synthetic data, about two minutes.
+  # Nothing is downloaded and nothing on the host is written outside ./artifacts.
+  smoke:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ml-semg-gesture-classifier:latest
+    command: make smoke
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./analysis:/app/analysis
+    environment:
+      OMP_NUM_THREADS: "4"
+
+  # The real thing, on Ninapro DB5. Downloads about 200 MB on the first run and
+  # then takes hours. The host's data/ directory is mounted so the download
+  # survives the container.
+  #
+  #   docker compose run --rm demo
+  demo:
+    extends: smoke
+    command: make demo
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./analysis:/app/analysis
+      - ./benchmarks:/app/benchmarks
+      - ./experiments/results:/app/experiments/results
+      - ./data:/app/data
+
+  # Tests only.
+  test:
+    extends: smoke
+    command: python -m pytest -q
+    volumes: []

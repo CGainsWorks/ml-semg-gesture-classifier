@@ -1,0 +1,57 @@
+# Configuration used by continuous integration and by `make smoke`.
+#
+# The source is a synthetic generator, not Ninapro. It exists so the whole
+# pipeline can be exercised in under two minutes without a 200 MB download.
+# Accuracy from this config is meaningless and is never quoted as a result.
+
+dataset:
+  source: synthetic
+  raw_dir: data/raw/synthetic
+  cache_dir: artifacts/cache-ci
+  exercise: E2
+  subjects: [1, 2, 3, 4]
+  gestures: [1, 2, 3, 4, 5, 6]
+  sample_rate_hz: 200
+
+preprocessing:
+  bandpass_low_hz: 10.0
+  bandpass_high_hz: 99.0
+  bandpass_order: 4
+  notch_hz: null
+
+window:
+  length_ms: 200.0
+  stride_ms: 50.0
+  drop_mixed_label: true
+  rest_ratio: 1.0
+  seed: 7
+
+train:
+  epochs: 3
+  batch_size: 128
+  learning_rate: 0.002
+  conv_channels: [8, 16, 16]
+  dense_units: 32
+  augment_noise_sd: 0.0
+  augment_scale_sd: 0.0
+  early_stopping_patience: 2
+  val_fraction: 0.25
+  seed: 7
+  device: cpu
+
+evaluation:
+  within_subject_train_reps: [1, 3, 4]
+  within_subject_test_reps: [2]
+  calibration_reps: [1]
+  calibration_epochs: 2
+  # Matches the shipped default, so the smoke run's budget verdict matches the
+  # real one. The voting code itself is covered by the unit tests.
+  vote_window: 1
+
+latency:
+  budget_ms: 300.0
+  io_allowance_ms: 20.0
+  bench_iterations: 100
+  bench_warmup: 20
+
+artifacts_dir: artifacts
