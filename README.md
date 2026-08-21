@@ -327,10 +327,10 @@ changed nothing, and int8 because that is what runs on the device.
 <!-- BEGIN:quantisation -->
 | Artefact | Size | Accuracy | p50 latency (ms) | p99 latency (ms) |
 | --- | --- | --- | --- | --- |
-| `gesture_cnn_float32.onnx` | 695 KiB | 0.5526 | 0.137 | 0.260 |
-| `gesture_cnn_float32.tflite` | 696 KiB | 0.5833 | 0.127 | 0.335 |
-| `gesture_cnn_int8.onnx` | 190 KiB | 0.5548 | 0.116 | 0.183 |
-| `gesture_cnn_int8.tflite` | 186 KiB | 0.5822 | 0.210 | 0.314 |
+| `gesture_cnn_float32.onnx` | 695 KiB | 0.5526 | 0.136 | 0.240 |
+| `gesture_cnn_float32.tflite` | 696 KiB | 0.5833 | 0.126 | 0.334 |
+| `gesture_cnn_int8.onnx` | 190 KiB | 0.5548 | 0.116 | 0.171 |
+| `gesture_cnn_int8.tflite` | 186 KiB | 0.5822 | 0.208 | 0.314 |
 <!-- END:quantisation -->
 
 The TFLite int8 model is **fully integer**: weights, activations, input and
@@ -359,7 +359,7 @@ time the window takes to fill:
 | --- | --- | --- |
 | Window fill | 200.0 | measured geometry |
 | Majority vote | 0.0 | not used; see the geometry sweep |
-| Inference (p99) | 0.318 | measured, this machine, int8 |
+| Inference (p99) | 0.319 | measured, this machine, int8 |
 | Acquisition and actuation | 20.0 | **assumed**, not implemented here |
 | **Total** | **220.3** | **meets** the budget |
 | Budget | 300 | 79.7 ms headroom |

@@ -1,5 +1,5 @@
 {
-  "artefact": "artifacts\\deploy\\db5\\gesture_cnn_int8.tflite",
+  "artefact": "artifacts/deploy/db5/gesture_cnn_int8.tflite",
   "synthetic": false,
   "subjects": [
     1,
@@ -1051,14 +1051,14 @@
   },
   "vote_window": 1,
   "latency": {
-    "median_inference_ms": 0.2157,
-    "p99_inference_ms": 0.3183,
+    "median_inference_ms": 0.2159,
+    "p99_inference_ms": 0.3186,
     "window_fill_ms": 200.0,
     "majority_vote_ms": 0.0,
     "io_allowance_ms": 20.0,
-    "total_ms": 220.3183,
+    "total_ms": 220.3186,
     "budget_ms": 300.0,
-    "headroom_ms": 79.6817,
+    "headroom_ms": 79.6814,
     "meets_budget": true
   },
   "per_subject": [
@@ -1067,14 +1067,14 @@
       "n_decisions": 17192,
       "raw_accuracy": 0.8543508608655188,
       "voted_accuracy": 0.8543508608655188,
-      "median_inference_ms": 0.2154
+      "median_inference_ms": 0.2169
     },
     {
       "subject": 2,
       "n_decisions": 19603,
       "raw_accuracy": 0.8795592511350303,
       "voted_accuracy": 0.8795592511350303,
-      "median_inference_ms": 0.2156
+      "median_inference_ms": 0.2165
     },
     {
       "subject": 3,
@@ -1088,49 +1088,49 @@
       "n_decisions": 19826,
       "raw_accuracy": 0.8272470493291637,
       "voted_accuracy": 0.8272470493291637,
-      "median_inference_ms": 0.2161
+      "median_inference_ms": 0.2157
     },
     {
       "subject": 5,
       "n_decisions": 19812,
       "raw_accuracy": 0.8268726024631536,
       "voted_accuracy": 0.8268726024631536,
-      "median_inference_ms": 0.2158
+      "median_inference_ms": 0.2161
     },
     {
       "subject": 6,
       "n_decisions": 19754,
       "raw_accuracy": 0.8152779183962742,
       "voted_accuracy": 0.8152779183962742,
-      "median_inference_ms": 0.2153
+      "median_inference_ms": 0.2156
     },
     {
       "subject": 7,
       "n_decisions": 20105,
       "raw_accuracy": 0.8114896791842825,
       "voted_accuracy": 0.8114896791842825,
-      "median_inference_ms": 0.2149
+      "median_inference_ms": 0.2157
     },
     {
       "subject": 8,
       "n_decisions": 19825,
       "raw_accuracy": 0.8386380832282472,
       "voted_accuracy": 0.8386380832282472,
-      "median_inference_ms": 0.2163
+      "median_inference_ms": 0.2157
     },
     {
       "subject": 9,
       "n_decisions": 20028,
       "raw_accuracy": 0.8308368284401837,
       "voted_accuracy": 0.8308368284401837,
-      "median_inference_ms": 0.2155
+      "median_inference_ms": 0.2158
     },
     {
       "subject": 10,
       "n_decisions": 20605,
       "raw_accuracy": 0.8597913127881582,
       "voted_accuracy": 0.8597913127881582,
-      "median_inference_ms": 0.2158
+      "median_inference_ms": 0.216
     }
   ]
 }

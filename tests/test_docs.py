@@ -17,6 +17,7 @@ import pytest
 from src.config import load_config, resolve
 
 SVG = "{http://www.w3.org/2000/svg}"
+BACKSLASH = chr(92)
 DIAGRAM = "docs/pipeline.svg"
 
 
@@ -264,6 +265,29 @@ class TestDocsMatchTheConfiguration:
         assert not mismatched, (
             f"these results were scored on a different dataset build from "
             f"{reference_name}: {mismatched}"
+        )
+
+    def test_committed_evidence_records_no_machine_specific_paths(self):
+        """These files are read on other machines, including by CI on Linux.
+
+        An absolute Windows path in a committed JSON is both machine-specific
+        and unparseable by ``pathlib`` on a POSIX host, where it comes back as
+        one long filename and a lookup by basename silently misses. That is not
+        hypothetical: it blanked the latency columns in the README's
+        quantisation table on the first CI run.
+        """
+        import json
+
+        offenders = []
+        for path in sorted(resolve("benchmarks").glob("*.json")):
+            text = path.read_text(encoding="utf-8")
+            blob = json.loads(text)
+            if isinstance(blob, dict) and blob.get("synthetic") is True:
+                continue
+            if BACKSLASH in text or ":/" in text.replace("://", ""):
+                offenders.append(path.name)
+        assert not offenders, (
+            "these committed files contain machine-specific paths: " f"{offenders}"
         )
 
     def test_no_em_or_en_dashes_in_the_prose(self):

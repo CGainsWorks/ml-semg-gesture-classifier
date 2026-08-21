@@ -36,6 +36,7 @@ from scipy import signal as sp_signal
 from src.config import Config, load_config, resolve
 from src.data.dataset import build_dataset, class_codes, load_raw_recording
 from src.data.gestures import gesture_names
+from src.embedded.benchmark import portable_path
 from src.embedded.runtime import InferenceRuntime, load_runtime, softmax
 from src.eval.metrics import evaluate
 from src.preprocessing.filters import bandpass_sos
@@ -272,7 +273,7 @@ def run(
     total_ms = config.window.length_ms + vote_ms + p99 + config.latency.io_allowance_ms
 
     return {
-        "artefact": str(path),
+        "artefact": portable_path(path),
         "synthetic": config.dataset.source == "synthetic",
         "subjects": subjects,
         "causal_filter": True,

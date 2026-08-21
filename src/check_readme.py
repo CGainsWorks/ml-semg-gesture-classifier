@@ -44,6 +44,7 @@ from src.evaluate import (
 )
 
 README = "README.md"
+BACKSLASH = chr(92)
 MARKER = re.compile(
     r"(<!-- BEGIN:(?P<name>[a-z0-9_-]+) -->\n)(?P<body>.*?)(<!-- END:(?P=name) -->)",
     re.DOTALL,
@@ -58,6 +59,18 @@ def _read_json(path: Path) -> dict | None:
 
 def _tag(config: Config) -> str:
     return "synthetic" if config.dataset.source == "synthetic" else "db5"
+
+
+def _artefact_name(path: str) -> str:
+    """Basename of a path that may have been recorded on another platform.
+
+    ``pathlib`` only understands the separators of the host it runs on, so a
+    Windows path read back on Linux comes out as one long filename and the
+    lookup silently misses, leaving the latency columns blank. Benchmarks are
+    produced on one machine and checked on another, which is precisely when
+    that happens.
+    """
+    return str(path).replace(BACKSLASH, "/").rsplit("/", 1)[-1]
 
 
 # --------------------------------------------------------------------------
@@ -196,7 +209,7 @@ def block_quantisation(config: Config) -> str:
     latencies = {}
     if latency:
         for row in latency["results"]:
-            latencies[Path(row["artefact"]).name] = row
+            latencies[_artefact_name(row["artefact"])] = row
 
     body = []
     for row in report["accuracy"]:
@@ -423,33 +436,37 @@ BUILDERS = {
 
 
 def regenerate(text: str, config: Config) -> tuple[str, list[str]]:
-    """Rewrite every marked block. Returns the new text and the names that changed."""
-    changed: list[str] = []
-    seen: set[str] = set()
+    """Rewrite every marked block. Returns the new text and the names that changed.
 
-    def replace(match: re.Match) -> str:
-        name = match.group("name")
-        seen.add(name)
-        if name not in BUILDERS:
-            raise ValueError(
-                f"README has a block named {name!r} with no builder in "
-                f"src/check_readme.py. Known blocks: {sorted(BUILDERS)}"
-            )
-        fresh = BUILDERS[name](config).strip() + "\n"
-        if fresh != match.group("body"):
-            changed.append(name)
-        return match.group(1) + fresh + match.group(4)
+    The marker set is validated first, before any builder runs. A structural
+    problem with the README is cheap to detect, and reporting it as whatever
+    missing-data error the first builder happens to raise is unhelpful.
+    """
+    present = {match.group("name") for match in MARKER.finditer(text)}
 
-    new_text = MARKER.sub(replace, text)
-
-    missing = set(BUILDERS) - seen
+    unknown = present - set(BUILDERS)
+    if unknown:
+        raise ValueError(
+            "README has block(s) with no builder in src/check_readme.py: "
+            f"{sorted(unknown)}. Known blocks: {sorted(BUILDERS)}"
+        )
+    missing = set(BUILDERS) - present
     if missing:
         raise ValueError(
             f"src/check_readme.py knows how to build {sorted(missing)} but the README "
             "has no marker for them. Add the markers or remove the builders."
         )
-    return new_text, changed
 
+    changed: list[str] = []
+
+    def replace(match: re.Match) -> str:
+        name = match.group("name")
+        fresh = BUILDERS[name](config).strip() + "\n"
+        if fresh != match.group("body"):
+            changed.append(name)
+        return match.group(1) + fresh + match.group(4)
+
+    return MARKER.sub(replace, text), changed
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
