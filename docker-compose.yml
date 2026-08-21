@@ -1,3 +1,8 @@
+# Compose reuses an image with a matching tag rather than checking whether the
+# Dockerfile has moved on, so `docker compose run` after a pull will happily
+# exercise the previous checkout. Pass --build, or use the Makefile targets,
+# which build first.
+
 services:
   # The default: the whole pipeline on synthetic data, about two minutes.
   # Nothing is downloaded and nothing on the host is written outside ./artifacts.
@@ -28,7 +33,7 @@ services:
       - ./experiments/results:/app/experiments/results
       - ./data:/app/data
 
-  # Tests only.
+  # Tests only. `docker compose run --build --rm test`, or `make docker-test`.
   test:
     extends: smoke
     command: python -m pytest -q

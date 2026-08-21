@@ -37,10 +37,23 @@ COPY tests/ ./tests/
 COPY experiments/ ./experiments/
 COPY config/ ./config/
 COPY scripts/ ./scripts/
-# The dataset card and the archive digests, so a `make demo` inside the
-# container can verify what it downloaded against the committed checksums
+
+# The prose and the committed evidence, not just the code. Part of the test
+# suite reads them: the documentation tests check that the diagram's labels
+# fit their boxes and quote the shipped geometry, that the model card's
+# parameter counts match what the architecture derives, and that every result
+# came from one source revision. Without these the container can run the
+# pipeline but cannot check that the repository is self-consistent, which is
+# half of what the tests are for.
+COPY README.md LICENSE ./
+COPY docs/ ./docs/
+COPY benchmarks/ ./benchmarks/
+COPY results/ ./results/
+
+# The dataset card, the archive digests and the generated dataset statistics.
+# The digests let a `make demo` inside the container verify what it downloaded
 # rather than trusting whatever it got.
-COPY data/DATASET_CARD.md data/DB5_CHECKSUMS.txt ./data/
+COPY data/DATASET_CARD.md data/DB5_CHECKSUMS.txt data/dataset_stats.json ./data/
 COPY Makefile pyproject.toml ./
 
 # Run as a normal user. The mounted artifacts and data directories are created

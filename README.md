@@ -510,6 +510,7 @@ rate is the one that says whether the arm would behave.
 | `make experiments` | The architecture and latency ablations. |
 | `make demo` | All of the above, from nothing. |
 | `make test` | The test suite. |
+| `make docker-test` | The test suite inside the container, rebuilding it first. |
 
 Every number on this page sits between markers and is regenerated from
 committed JSON by `python -m src.check_readme --write`. CI runs

@@ -166,7 +166,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: The image can run the pipeline
-        run: |
-          docker run --rm ml-semg-gesture-classifier:ci \
-              python -m pytest -q tests/test_data.py
+      # The whole suite, not a sample. Running one file here once let a real
+      # gap through: the image was missing README.md and docs/, so every test
+      # that checks the repository against its own documentation failed inside
+      # the container while passing on the host.
+      - name: The image passes the test suite
+        run: docker run --rm ml-semg-gesture-classifier:ci python -m pytest -q
+
+      - name: The image can check the README against the committed results
+        run: docker run --rm ml-semg-gesture-classifier:ci python -m src.check_readme

@@ -11,7 +11,8 @@ CI_CONFIG ?= config/ci.yaml
 .DEFAULT_GOAL := help
 .PHONY: help setup data dataset-report baseline deep train experiments deploy \
         export bench estimate control-loop calibrate evaluate figures test \
-        lint smoke demo docker-build docker-up docker-down clean clean-all
+        lint smoke demo docker-build docker-up docker-test docker-down clean \
+        clean-all
 
 help:
 	@echo "make setup           install the pinned dependencies"
@@ -32,6 +33,7 @@ help:
 	@echo "make lint            ruff"
 	@echo "make demo            everything above, end to end, from nothing"
 	@echo "make docker-up       the same thing in Docker"
+	@echo "make docker-test     run the test suite inside the container"
 	@echo "make clean           remove trained models, caches and exports"
 
 setup:
@@ -109,8 +111,14 @@ smoke:
 docker-build:
 	docker compose build
 
-docker-up:
+# Every docker target builds first. Compose reuses a tagged image if one
+# exists rather than noticing the Dockerfile moved on, so without this a run
+# after a pull silently exercises the previous checkout.
+docker-up: docker-build
 	docker compose up
+
+docker-test: docker-build
+	docker compose run --rm test
 
 docker-down:
 	docker compose down -v
