@@ -1,0 +1,33 @@
+// An STM32F411 as far as this firmware can tell: a Cortex-M4F at 100 MHz with
+// 512 KiB of flash, 128 KiB of SRAM, USART2 and the DWT cycle counter.
+//
+// Renode's bundled stm32f4.repl describes a larger part (2 MiB flash, 256 KiB
+// SRAM, no FPU on the core model), so this file defines the smaller one rather
+// than reuse it. The linker script enforces the same sizes at build time.
+//
+// Timing: the core retires PerformanceInMips million instructions per virtual
+// second and the DWT counts at 100 MHz, so CYCCNT advances by exactly one per
+// executed instruction. That is an emulator estimate. It does not model
+// pipeline stalls, multi-cycle instructions or flash wait states.
+
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    priorityMask: 0xF0
+    systickFrequency: 100000000
+    IRQ -> cpu@0
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4f"
+    nvic: nvic
+    PerformanceInMips: 100
+
+dwt: Miscellaneous.DWT @ sysbus 0xE0001000
+    frequency: 100000000
+
+flash: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x80000
+
+sram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x20000
+
+usart2: UART.STM32_UART @ sysbus <0x40004400, +0x100>
+    -> nvic@38

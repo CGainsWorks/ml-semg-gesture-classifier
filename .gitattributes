@@ -37,3 +37,9 @@
 
 # Generated reports should not clutter a diff review.
 analysis/**/*.png -diff
+
+# Except the firmware's model, which is committed as an ordinary blob. It is
+# 186 KiB, the firmware embeds it byte for byte and the emulator job has to
+# be able to build from a plain checkout without an LFS fetch.
+firmware/model/*.tflite -filter binary
+firmware/vectors/*.bin binary

@@ -1,0 +1,89 @@
+{
+  "emulated": true,
+  "disclaimer": "Emulator estimates, not hardware measurements. Renode retires one instruction per cycle and does not model pipeline stalls, multi-cycle instructions or flash wait states, so a real STM32F411 will take longer. Memory figures are exact for this build.",
+  "target": {
+    "name": "STM32F411 memory map (Cortex-M4F, 100 MHz, 512 KiB flash, 128 KiB RAM)",
+    "platform": "firmware/renode/stm32f411.repl",
+    "linker_script": "firmware/src/stm32f411.ld",
+    "clock_mhz": 100.0
+  },
+  "toolchain": {
+    "emulator": "Renode v1.16.1.16973",
+    "compiler": "arm-none-eabi-gcc (Arm GNU Toolchain 14.2.Rel1 (Build arm-14.52)) 14.2.1 20241119",
+    "cmake": "cmake version 3.22.1",
+    "tflite_micro_commit": "f59d98795086b522d7d53f683a0df3ee704afc18",
+    "kernels": "CMSIS-NN"
+  },
+  "model": {
+    "path": "firmware/model/gesture_cnn_int8.tflite",
+    "bytes": 190264,
+    "sha256": "0dfda17cd1a4caadd6bc24a143ce689a26612645150428279295e14f0044e975",
+    "synthetic_weights": true
+  },
+  "memory": {
+    "flash_bytes": 524288,
+    "flash_used_bytes": 294000,
+    "ram_bytes": 131072,
+    "ram_used_bytes": 54216,
+    "ram_used_includes": "statics, the tensor arena, a 4 KiB heap and an 8 KiB stack",
+    "arena_reserved_bytes": 40960,
+    "arena_used_bytes": 29716,
+    "fits_flash": true,
+    "fits_ram": true
+  },
+  "cycles": {
+    "label": "emulator estimate",
+    "windows": 36,
+    "mean": 15772392.0,
+    "min": 15772392,
+    "max": 15772392,
+    "estimated_inference_ms_at_clock": 157.72392,
+    "per_window": [
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392,
+      15772392
+    ]
+  },
+  "outputs": {
+    "reference": "TFLite interpreter, tensorflow 2.18.1, BUILTIN_REF (reference kernels)",
+    "compared": 36,
+    "bit_exact": 36,
+    "max_abs_diff_lsb": 0,
+    "tolerance_lsb": 0,
+    "top_class_agrees": 36,
+    "mismatched_windows": []
+  }
+}

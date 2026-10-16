@@ -47,7 +47,7 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint
-        run: python -m ruff check src tests experiments
+        run: python -m ruff check src tests experiments firmware
 
       - name: Tests
         run: python -m pytest -q
@@ -175,3 +175,64 @@ jobs:
 
       - name: The image can check the README against the committed results
         run: docker run --rm ml-semg-gesture-classifier:ci python -m src.check_readme
+
+  firmware:
+    name: firmware on an emulated Cortex-M4 (Renode)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Renode 1.16.1, the Arm GNU Toolchain 14.2.Rel1 and a pinned TFLite
+      # Micro tree with CMSIS-NN, all pinned in the Dockerfile. The layers are
+      # cached, so the toolchain download happens once, not on every push.
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the toolchain image
+        uses: docker/build-push-action@v6
+        with:
+          context: docker
+          file: docker/firmware.Dockerfile
+          push: false
+          load: true
+          tags: semg-firmware:ci
+          cache-from: type=gha,scope=firmware
+          cache-to: type=gha,mode=max,scope=firmware
+
+      # Cross-compile with CMake, link against the STM32F411 memory map (the
+      # link fails if the image does not fit 128 KiB of RAM), run under Renode,
+      # and compare every int8 output with the desktop interpreter's. Any
+      # difference fails the step.
+      - name: Build, run under Renode and compare with the host interpreter
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work semg-firmware:ci \
+            bash firmware/scripts/build_and_run.sh
+
+      # The README quotes the committed report. Renode is deterministic, so
+      # this run must reproduce it exactly; if it does not, the toolchain or
+      # the firmware changed and the committed numbers are stale.
+      - name: The committed emulator report is what this run produced
+        run: |
+          python3 - <<'PY'
+          import json
+          fresh = json.load(open("build/firmware/renode_cortex_m4.json"))
+          committed = json.load(open("benchmarks/renode_cortex_m4.json"))
+          if fresh != committed:
+              for key in sorted(set(fresh) | set(committed)):
+                  if fresh.get(key) != committed.get(key):
+                      print(f"differs: {key}\n  committed: {committed.get(key)}\n  this run:  {fresh.get(key)}")
+              raise SystemExit("benchmarks/renode_cortex_m4.json is stale; copy build/firmware/renode_cortex_m4.json over it")
+          print("committed emulator report reproduced exactly")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: firmware-renode
+          path: |
+            build/firmware/uart.log
+            build/firmware/renode.log
+            build/firmware/renode_cortex_m4.json
+            build/firmware/semg_firmware.map
+            build/firmware/semg_firmware.size.txt
+          retention-days: 14
+          if-no-files-found: warn

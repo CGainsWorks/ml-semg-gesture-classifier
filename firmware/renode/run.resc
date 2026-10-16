@@ -1,0 +1,18 @@
+:name: sEMG gesture classifier firmware on an emulated STM32F411
+:description: Loads the TFLite Micro firmware, runs it to completion and logs USART2 to a file.
+
+$repl ?= @firmware/renode/stm32f411.repl
+$elf ?= @build/firmware/semg_firmware.elf
+$uart ?= @build/firmware/uart.log
+
+mach create "stm32f411"
+machine LoadPlatformDescription $repl
+sysbus LoadELF $elf
+usart2 CreateFileBackend $uart true
+
+# Ten virtual seconds is about thirty times what the run needs at 100 MIPS.
+# The firmware sleeps in WFI once it has printed its last line and an idle
+# core costs the emulator almost nothing.
+emulation RunFor "10"
+cpu ExecutedInstructions
+quit

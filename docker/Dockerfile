@@ -50,6 +50,11 @@ COPY docs/ ./docs/
 COPY benchmarks/ ./benchmarks/
 COPY results/ ./results/
 
+# The firmware's model, test windows and reference outputs. The suite checks
+# that the desktop interpreter still computes what the firmware is compared
+# against; the firmware itself is built in docker/firmware.Dockerfile.
+COPY firmware/ ./firmware/
+
 # The dataset card, the archive digests and the generated dataset statistics.
 # The digests let a `make demo` inside the container verify what it downloaded
 # rather than trusting whatever it got.

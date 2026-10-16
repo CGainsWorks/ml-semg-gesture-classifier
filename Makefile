@@ -34,6 +34,7 @@ help:
 	@echo "make demo            everything above, end to end, from nothing"
 	@echo "make docker-up       the same thing in Docker"
 	@echo "make docker-test     run the test suite inside the container"
+	@echo "make firmware        cross-build the Cortex-M firmware and run it under Renode"
 	@echo "make clean           remove trained models, caches and exports"
 
 setup:
@@ -95,7 +96,7 @@ test:
 	$(PYTHON) -m pytest -q
 
 lint:
-	$(PYTHON) -m ruff check src tests experiments
+	$(PYTHON) -m ruff check src tests experiments firmware
 
 # Everything, on the real data. Hours, and it needs the download.
 # `bash scripts/run_demo.sh` is the same thing without the download step, and
@@ -122,6 +123,23 @@ docker-test: docker-build
 
 docker-down:
 	docker compose down -v
+
+# The Cortex-M firmware: Arm GNU Toolchain, CMake, TFLite Micro with CMSIS-NN,
+# run under Renode on an emulated STM32F411. Everything happens in the image,
+# so nothing beyond Docker is needed on the host. The report lands in
+# build/firmware/renode_cortex_m4.json; benchmarks/ holds the committed copy.
+FIRMWARE_IMAGE ?= semg-firmware
+
+firmware-image:
+	docker build -f docker/firmware.Dockerfile -t $(FIRMWARE_IMAGE) docker
+
+firmware: firmware-image
+	docker run --rm -v "$(CURDIR):/work" -w /work $(FIRMWARE_IMAGE) bash firmware/scripts/build_and_run.sh
+
+# Retrain the firmware's model and rewrite its test vectors. Only needed when
+# the architecture or the exporter changes.
+firmware-model:
+	PYTHON=$(PYTHON) bash firmware/scripts/make_model.sh
 
 clean:
 	rm -rf artifacts
