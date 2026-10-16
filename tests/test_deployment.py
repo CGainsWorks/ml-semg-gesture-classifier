@@ -252,8 +252,11 @@ class TestOnTargetEstimates:
         assert estimates == sorted(estimates, reverse=True)
 
     def test_the_model_fits_the_smallest_target(self):
-        verdict = fits_in_memory(model_bytes=91_000, arena_bytes=60_000, target=TARGETS[0])
+        verdict = fits_in_memory(
+            model_bytes=91_000, ram_bytes=60_000, target=TARGETS[0], ram_source="test"
+        )
         assert verdict["fits_flash"]
+        assert verdict["fits_ram"]
 
     def test_zero_macs_is_rejected(self):
         with pytest.raises(ValueError, match="must be positive"):

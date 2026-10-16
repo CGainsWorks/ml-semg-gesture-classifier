@@ -3,7 +3,7 @@
   "representative_windows": 504,
   "artefacts": {
     "tflite_float32": {
-      "path": "artifacts\\deploy\\db5\\gesture_cnn_float32.tflite",
+      "path": "artifacts/deploy/db5/gesture_cnn_float32.tflite",
       "bytes": 712788,
       "operators": {
         "CONV_2D": 3,
@@ -34,10 +34,10 @@
           0
         ]
       },
-      "arena_bytes": 883368
+      "all_tensors_bytes": 883368
     },
     "tflite_int8": {
-      "path": "artifacts\\deploy\\db5\\gesture_cnn_int8.tflite",
+      "path": "artifacts/deploy/db5/gesture_cnn_int8.tflite",
       "bytes": 190264,
       "operators": {
         "CONV_2D": 3,
@@ -68,10 +68,10 @@
           30
         ]
       },
-      "arena_bytes": 221778
+      "all_tensors_bytes": 221778
     },
     "onnx_float32": {
-      "path": "artifacts\\deploy\\db5\\gesture_cnn_float32.onnx",
+      "path": "artifacts/deploy/db5/gesture_cnn_float32.onnx",
       "bytes": 711654,
       "opset": 17,
       "operators": {
@@ -85,7 +85,7 @@
       }
     },
     "onnx_int8": {
-      "path": "artifacts\\deploy\\db5\\gesture_cnn_int8.onnx",
+      "path": "artifacts/deploy/db5/gesture_cnn_int8.onnx",
       "bytes": 194861,
       "opset": 17,
       "operators": {

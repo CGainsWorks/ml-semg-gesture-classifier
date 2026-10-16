@@ -1,12 +1,16 @@
-"""Write the on-target latency estimate table.
+"""Write the on-target latency and memory table.
 
-Reads the exported artefacts and the measured host benchmark, then applies
-:mod:`src.embedded.estimate` to produce a per-board figure.
+Reads the exported artefacts, the measured host benchmark and the emulated
+firmware report, then applies :mod:`src.embedded.estimate` to produce a
+per-board figure.
 
-Every row it writes carries ``"measured": false``. That is the point. No
-STM32 or Jetson was available for this work, the brief asks for on-target
-latency, and the honest answer is arithmetic with its assumptions written
-down rather than a number that looks like a measurement.
+Every row it writes carries ``"measured": false``. No STM32 or Jetson board
+was used for this work. The latency columns are estimates: arithmetic from the
+MAC count for every board, plus for the Cortex-M4 a cycle count from the
+emulated firmware, which is an emulator estimate. The RAM column comes from
+that firmware build (what the linker placed in RAM, including the arena the
+TFLite Micro allocator reported), which is exact for the build and not an
+estimate.
 """
 
 from __future__ import annotations
@@ -20,7 +24,7 @@ from src.embedded.estimate import estimate_all
 
 
 def _artefact_facts(config: Config) -> dict[str, object]:
-    """Model size, MAC count and arena floor, read from what was exported."""
+    """Model size and MAC count, read from what was exported."""
     tag = "synthetic" if config.dataset.source == "synthetic" else "db5"
     report_path = resolve("results") / tag / "export_report.json"
     if not report_path.exists():
@@ -47,7 +51,7 @@ def _artefact_facts(config: Config) -> dict[str, object]:
         "macs": int(architecture["macs_per_inference"]),
         "parameters": int(architecture["parameters"]),
         "model_bytes": int(tflite_int8["bytes"]),
-        "arena_bytes": int(tflite_int8["arena_bytes"]),
+        "all_tensors_bytes": int(tflite_int8["all_tensors_bytes"]),
     }
 
 
@@ -68,27 +72,67 @@ def _measured_host(config: Config) -> dict[str, object] | None:
     return None
 
 
+EMULATOR_REPORT = "renode_cortex_m4.json"
+EMULATED_TARGET_PREFIX = "STM32F411"
+
+
+def _emulator() -> dict[str, object]:
+    path = resolve("benchmarks") / EMULATOR_REPORT
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} not found. Build and run the firmware under Renode: "
+            "bash firmware/scripts/build_and_run.sh inside the firmware image "
+            "(docker/firmware.Dockerfile), then copy build/firmware/"
+            f"{EMULATOR_REPORT} to benchmarks/."
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def run(config: Config) -> dict[str, object]:
     facts = _artefact_facts(config)
+    emulator = _emulator()
     vote_ms = (config.evaluation.vote_window - 1) * config.window.stride_ms
+    memory = emulator["memory"]
+    ram_source = (
+        "RAM placed by the linker for the Renode firmware build: statics, a "
+        f"{memory['arena_reserved_bytes']:,}-byte tensor arena "
+        f"({memory['arena_used_bytes']:,} bytes used), heap and stack"
+    )
 
     rows = estimate_all(
         macs=facts["macs"],
         model_bytes=facts["model_bytes"],
-        arena_bytes=facts["arena_bytes"],
+        ram_bytes=int(memory["ram_used_bytes"]),
+        ram_source=ram_source,
         window_ms=config.window.length_ms,
         vote_ms=vote_ms,
         io_ms=config.latency.io_allowance_ms,
         budget_ms=config.latency.budget_ms,
     )
 
+    cycles = emulator["cycles"]
+    for row in rows:
+        if row["target"].startswith(EMULATED_TARGET_PREFIX):
+            inference = cycles["mean"] / (row["clock_mhz"] * 1e3)
+            total = row["window_fill_ms"] + row["majority_vote_ms"] + inference
+            total += row["io_allowance_ms"]
+            row["emulator"] = {
+                "label": "emulator estimate",
+                "source": f"benchmarks/{EMULATOR_REPORT}",
+                "cycles_mean": cycles["mean"],
+                "estimated_inference_ms": inference,
+                "estimated_total_ms": total,
+                "estimated_to_meet_budget": bool(total <= row["budget_ms"]),
+            }
+
     return {
         "synthetic": config.dataset.source == "synthetic",
         "disclaimer": (
-            "Estimates, not measurements. No STM32 or Jetson was available. "
-            "Every row is arithmetic from the MAC count and a documented "
-            "throughput assumption; see src/embedded/estimate.py and "
-            "benchmarks/README.md."
+            "Estimates, not measurements. No STM32 or Jetson board was used. "
+            "Latency is arithmetic from the MAC count and a documented throughput "
+            "assumption (src/embedded/estimate.py), plus for the STM32F411 an "
+            "emulator estimate from Renode. RAM is from the emulated firmware "
+            "build. See benchmarks/README.md."
         ),
         "artefact": facts,
         "measured_host": _measured_host(config),
@@ -107,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
 
     out = Path(args.out) if args.out else resolve("benchmarks") / "latency_targets.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    out.write_text(json.dumps(report, indent=2), encoding="utf-8", newline="\n")
 
     measured = report["measured_host"]
     if measured:
@@ -126,6 +170,14 @@ def main(argv: list[str] | None = None) -> int:
             f"  {row['target']:44s} {row['estimated_inference_ms']:7.2f} ms inference, "
             f"{row['estimated_total_ms']:7.1f} ms total, {verdict} the budget"
         )
+        emulated = row.get("emulator")
+        if emulated:
+            verdict = "meets" if emulated["estimated_to_meet_budget"] else "MISSES"
+            print(
+                f"  {'  emulator estimate (Renode)':44s} "
+                f"{emulated['estimated_inference_ms']:7.2f} ms inference, "
+                f"{emulated['estimated_total_ms']:7.1f} ms total, {verdict} the budget"
+            )
     print(f"\nwritten to {out}")
     return 0
 

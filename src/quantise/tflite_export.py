@@ -30,6 +30,8 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import tensorflow as tf  # noqa: E402
 
+from src.config import portable_path  # noqa: E402
+
 
 def _representative_dataset_fn(windows: np.ndarray):
     """Yield one window at a time, as the converter expects.
@@ -128,7 +130,7 @@ def describe(path: str | Path) -> dict[str, object]:
     inp = interpreter.get_input_details()[0]
     out = interpreter.get_output_details()[0]
     return {
-        "path": str(path),
+        "path": portable_path(path),
         "bytes": Path(path).stat().st_size,
         "operators": operators(path),
         "input": {
@@ -141,18 +143,20 @@ def describe(path: str | Path) -> dict[str, object]:
             "dtype": np.dtype(out["dtype"]).name,
             "quantization": [float(out["quantization"][0]), int(out["quantization"][1])],
         },
-        "arena_bytes": _arena_size(interpreter),
+        "all_tensors_bytes": _all_tensor_bytes(interpreter),
     }
 
 
-def _arena_size(interpreter: tf.lite.Interpreter) -> int:
-    """Sum of the intermediate tensor sizes: a floor on the TFLite Micro arena.
+def _all_tensor_bytes(interpreter: tf.lite.Interpreter) -> int:
+    """Sum of the sizes of every tensor in the graph, weights included.
 
-    A floor rather than the real figure. The Micro interpreter reuses buffers
-    whose lifetimes do not overlap, so the arena it needs is smaller than this
-    sum, and it also adds its own bookkeeping. Sizing a real deployment means
-    building for the target and reading what the allocator reports; this is
-    here to catch an order-of-magnitude mistake early.
+    Not a RAM figure and it was once mistaken for one. It counts the weights,
+    which TFLite Micro reads from flash and it counts every activation as if
+    all of them were live at once, when the Micro allocator reuses buffers
+    whose lifetimes do not overlap. The real RAM requirement comes from
+    building for the target and reading what the linker and the allocator
+    report: see ``firmware/`` and ``benchmarks/renode_cortex_m4.json``. This
+    is kept as a quick order-of-magnitude check on the exported graph.
     """
     total = 0
     for detail in interpreter.get_tensor_details():

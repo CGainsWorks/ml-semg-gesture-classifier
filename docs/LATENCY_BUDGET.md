@@ -135,10 +135,18 @@ single-threaded, batch size one, reported as a distribution because a control
 loop is judged on its worst case rather than its average.
 
 `benchmarks/latency_targets.json` is **not measured**. No STM32 and no Jetson
-was available for this work. Every row in that file carries
+board was used for this work. Every row in that file carries
 `"measured": false` and is arithmetic from the model's MAC count and a
 documented throughput assumption per board. See `src/embedded/estimate.py` for
 the assumptions and where they come from.
+
+`benchmarks/renode_cortex_m4.json` is **emulated**. The int8 model runs in
+TensorFlow Lite Micro with CMSIS-NN on an emulated Cortex-M4F under Renode
+and its cycle count is an emulator estimate: one cycle per instruction, no
+pipeline stalls, no flash wait states. Its outputs are checked bit for bit
+against the desktop interpreter and its flash and RAM figures are exact for
+the build. See `benchmarks/README.md` for what that does and does not
+establish.
 
 To replace an estimate with a measurement, run the same benchmark on the
 board. `benchmarks/README.md` has the instructions. The output is the same

@@ -1,11 +1,11 @@
 {
   "synthetic": false,
-  "disclaimer": "Estimates, not measurements. No STM32 or Jetson was available. Every row is arithmetic from the MAC count and a documented throughput assumption; see src/embedded/estimate.py and benchmarks/README.md.",
+  "disclaimer": "Estimates, not measurements. No STM32 or Jetson board was used. Latency is arithmetic from the MAC count and a documented throughput assumption (src/embedded/estimate.py), plus for the STM32F411 an emulator estimate from Renode. RAM is from the emulated firmware build. See benchmarks/README.md.",
   "artefact": {
     "macs": 7764224,
     "parameters": 177490,
     "model_bytes": 190264,
-    "arena_bytes": 221778
+    "all_tensors_bytes": 221778
   },
   "measured_host": {
     "label": "host",
@@ -36,12 +36,21 @@
         "model_kib": 185.8046875,
         "flash_kib": 512,
         "fits_flash": true,
-        "arena_upper_bound_kib": 216.580078125,
+        "ram_needed_kib": 52.9453125,
+        "ram_needed_source": "RAM placed by the linker for the Renode firmware build: statics, a 40,960-byte tensor arena (29,716 bytes used), heap and stack",
         "ram_kib": 128,
-        "fits_ram_upper_bound": false
+        "fits_ram": true
       },
       "note": "No cache. Weights execute from flash, which costs wait states.",
-      "measured": false
+      "measured": false,
+      "emulator": {
+        "label": "emulator estimate",
+        "source": "benchmarks/renode_cortex_m4.json",
+        "cycles_mean": 15772392.0,
+        "estimated_inference_ms": 157.72392,
+        "estimated_total_ms": 377.72392,
+        "estimated_to_meet_budget": false
+      }
     },
     {
       "target": "STM32H743 (Cortex-M7, 480 MHz)",
@@ -59,9 +68,10 @@
         "model_kib": 185.8046875,
         "flash_kib": 2048,
         "fits_flash": true,
-        "arena_upper_bound_kib": 216.580078125,
+        "ram_needed_kib": 52.9453125,
+        "ram_needed_source": "RAM placed by the linker for the Renode firmware build: statics, a 40,960-byte tensor arena (29,716 bytes used), heap and stack",
         "ram_kib": 1024,
-        "fits_ram_upper_bound": true
+        "fits_ram": true
       },
       "note": "Dual-issue with an L1 cache; the whole model fits in tightly coupled RAM.",
       "measured": false
@@ -82,9 +92,10 @@
         "model_kib": 185.8046875,
         "flash_kib": 16777216,
         "fits_flash": true,
-        "arena_upper_bound_kib": 216.580078125,
+        "ram_needed_kib": 52.9453125,
+        "ram_needed_source": "the TFLite Micro figure, for scale only: ONNX Runtime on Linux needs more and the board has gigabytes",
         "ram_kib": 4194304,
-        "fits_ram_upper_bound": true
+        "fits_ram": true
       },
       "note": "CPU only. The 128-core GPU would be faster and is not modelled here.",
       "measured": false

@@ -1,9 +1,9 @@
 """On-target latency estimates, and why they are only estimates.
 
-No STM32 or Jetson was available for this work. Rather than quietly omit the
-target-hardware number the brief asks for, or worse invent one, this module
-computes it from the model's operation count and a documented throughput
-figure for each candidate board, and labels every result as an estimate.
+No STM32 or Jetson board was used for this work. Rather than quietly omit the
+target-hardware number, or worse invent one, this module computes it from the
+model's operation count and a documented throughput figure for each candidate
+board and labels every result as an estimate.
 
 The arithmetic is deliberately simple, because a complicated model of a cache
 hierarchy would only make a guess look like a measurement:
@@ -27,8 +27,15 @@ The inputs and where they come from:
     outside the multiply-accumulate inner loop.
 
 Both of those are approximations, and neither was calibrated against these
-particular boards. Treat the output as an order of magnitude, and read
-``benchmarks/README.md`` for how to replace it with a measurement.
+particular boards. Treat the output as an order of magnitude.
+
+The Cortex-M4 row has a second, independent estimate: the firmware under
+``firmware/`` runs the same int8 model in TFLite Micro with CMSIS-NN on an
+emulated Cortex-M4F and ``benchmarks/renode_cortex_m4.json`` records the
+emulator's cycle count. That is also an estimate (the emulator retires one
+instruction per cycle) but it is not arithmetic from a MAC count. The memory
+figures from that build are not estimates: they are what the linker placed
+and what the TFLite Micro allocator reported.
 """
 
 from __future__ import annotations
@@ -50,8 +57,8 @@ class Target:
 
 # Representative parts, not a recommendation. The two Cortex-M entries bracket
 # what a self-contained prosthetic controller would plausibly use; the Jetson
-# is there because the brief names it and because a Linux-class board changes
-# the answer completely.
+# is there because the original plan names it and because a Linux-class board
+# changes the answer completely.
 TARGETS: tuple[Target, ...] = (
     Target(
         name="STM32F411 (Cortex-M4F, 100 MHz)",
@@ -94,22 +101,32 @@ def estimate_latency_ms(macs: int, target: Target) -> float:
     return cycles / (target.clock_mhz * 1e6) * 1e3
 
 
-def fits_in_memory(model_bytes: int, arena_bytes: int, target: Target) -> dict[str, object]:
-    """Whether the weights fit in flash and the working set fits in RAM."""
+def fits_in_memory(
+    model_bytes: int, ram_bytes: int, target: Target, ram_source: str
+) -> dict[str, object]:
+    """Whether the weights fit in flash and the working set fits in RAM.
+
+    ``ram_bytes`` is what the deployment needs in RAM: for the Cortex-M
+    targets, everything the linker placed in RAM for the emulated firmware
+    build (statics, the tensor arena, heap and stack). The weights are not in
+    it, because TFLite Micro reads them from flash.
+    """
     return {
         "model_kib": model_bytes / 1024,
         "flash_kib": target.flash_kib,
         "fits_flash": model_bytes / 1024 <= target.flash_kib,
-        "arena_upper_bound_kib": arena_bytes / 1024,
+        "ram_needed_kib": ram_bytes / 1024,
+        "ram_needed_source": ram_source,
         "ram_kib": target.ram_kib,
-        "fits_ram_upper_bound": arena_bytes / 1024 <= target.ram_kib,
+        "fits_ram": ram_bytes / 1024 <= target.ram_kib,
     }
 
 
 def estimate_all(
     macs: int,
     model_bytes: int,
-    arena_bytes: int,
+    ram_bytes: int,
+    ram_source: str,
     window_ms: float,
     vote_ms: float,
     io_ms: float,
@@ -133,7 +150,15 @@ def estimate_all(
                 "budget_ms": budget_ms,
                 "estimated_headroom_ms": budget_ms - total,
                 "estimated_to_meet_budget": bool(total <= budget_ms),
-                "memory": fits_in_memory(model_bytes, arena_bytes, target),
+                "memory": fits_in_memory(
+                    model_bytes,
+                    ram_bytes,
+                    target,
+                    ram_source
+                    if target.runtime.startswith("TFLite Micro")
+                    else "the TFLite Micro figure, for scale only: ONNX Runtime on "
+                    "Linux needs more and the board has gigabytes",
+                ),
                 "note": target.note,
                 "measured": False,
             }
