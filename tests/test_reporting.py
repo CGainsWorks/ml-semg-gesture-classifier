@@ -167,3 +167,67 @@ class TestResultSerialisation:
         restored = json.loads(json.dumps(run))
         assert restored["pooled"]["accuracy"] == pytest.approx(run["pooled"]["accuracy"])
         assert np.array(restored["pooled"]["confusion"]).sum() == 100
+
+
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+class TestArchitectureFindings:
+    """The prose under the architecture table is generated, comparisons included."""
+
+    @staticmethod
+    def _report(overrides=None):
+        from src.config import resolve
+
+        report = json.loads(
+            resolve("experiments/results/db5/architecture_comparison.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for (protocol, variant), value in (overrides or {}).items():
+            for row in report["results"][protocol]:
+                if row["variant"] == variant:
+                    row["test_accuracy"] = value
+        return report
+
+    def test_every_quoted_accuracy_is_in_the_json(self):
+        from src.check_readme import architecture_findings
+
+        report = self._report()
+        text = architecture_findings(report, fold_sd=0.07)
+        for protocol in ("within_subject", "subject_independent"):
+            for row in report["results"][protocol]:
+                if row["variant"] in {"conv1d", "conv2d", "conv2d_noaug"}:
+                    assert f"{row['test_accuracy']:.3f}" in text
+                    assert f"{row['overfit_gap']:.3f}" in text
+
+    def test_the_headline_follows_the_numbers(self):
+        from src.check_readme import architecture_findings
+
+        split = _flat(
+            architecture_findings(
+                self._report({("subject_independent", "conv1d"): 0.30}), fold_sd=0.07
+            )
+        )
+        assert "across subjects the 1-D design does" in split
+        assert "the order reverses" in split
+
+        both = _flat(
+            architecture_findings(
+                self._report({("subject_independent", "conv1d"): 0.20}), fold_sd=0.07
+            )
+        )
+        assert "The 2-D design wins both within and across subjects." in both
+        assert "reverses" not in both
+
+    def test_augmentation_wording_follows_the_numbers(self):
+        from src.check_readme import architecture_findings
+
+        flipped = _flat(
+            architecture_findings(
+                self._report({("within_subject", "conv2d_noaug"): 0.50}), fold_sd=0.07
+            )
+        )
+        assert "Augmentation buys within-subject accuracy" in flipped
+        assert "That is not the trade it is supposed to make." in flipped

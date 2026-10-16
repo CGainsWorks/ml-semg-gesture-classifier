@@ -8,28 +8,25 @@ the numbers down twice.
 **Why two-dimensional convolutions over a one-dimensional signal.** The
 obvious design for multi-channel sEMG is a 1-D convolution along time with the
 electrodes as input channels, which lets the first layer mix all sixteen
-electrodes at once. That was the first thing built here and it overfits badly:
-on Ninapro DB5, within-subject accuracy 0.535 against 0.606 for the design
-below, with a train-test gap of 0.296 against 0.167, measured on the same fold
-with the same training recipe (`experiments/architecture_comparison.py`).
+electrodes at once. That was the first thing built here.
 
-The reason is that the electrodes are not an unordered feature vector. They
-are two rings of eight around the forearm, and adjacent electrodes see
-overlapping muscle activity. Treating the window as a 16 x 40 image and
-convolving a 3 x 5 kernel over it gives the model that adjacency as an
-inductive bias instead of asking it to learn the layout from four thousand
-training windows. A ring is also periodic, so wrapping the electrode axis was
-tried too; within subject it landed slightly ahead (0.638 against 0.606) and
-across subjects slightly behind (0.250 against 0.270), which on one fold each
-is a wash, and it was dropped rather than kept as unjustified complexity.
+The electrodes are not an unordered feature vector, though. They are two rings
+of eight around the forearm and adjacent electrodes see overlapping muscle
+activity. Treating the window as a 16 x 40 image and convolving a 3 x 5 kernel
+over it gives the model that adjacency as an inductive bias instead of asking
+it to learn the layout from four thousand training windows. A ring is also
+periodic, so wrapping the electrode axis was tried too and dropped as
+complexity the single-fold result does not justify.
 
-Being straight about the strength of that evidence: the improvement is clear
-within subject and it is **not** clear across subjects. On the single
-leave-one-subject-out fold in that experiment the two designs are a tie, 0.270
-against 0.269, which says nothing either way. The designs are chosen apart on
-the within-subject comparison and on the overfitting gap, which the 2-D model
-nearly halves; the cross-subject numbers to read are the ten-fold ones in the
-README.
+Being straight about the strength of that evidence
+(`experiments/architecture_comparison.py`, one fold per protocol): the 2-D
+design is ahead within subject and has the smaller overfitting gap there and
+on the one leave-one-subject-out fold it is *behind* the 1-D design, with the
+larger overfitting gap. The cross-subject difference is inside the
+fold-to-fold spread of the ten-fold run, so it does not decide anything
+either way. The README's architecture section states the figures; it is
+generated from `experiments/results/db5/architecture_comparison.json` and CI
+checks it, so the numbers live there and not here.
 
 The model is small on purpose. The target is a microcontroller, and a 200 ms
 window of 16-channel sEMG at 200 Hz does not carry enough information to feed

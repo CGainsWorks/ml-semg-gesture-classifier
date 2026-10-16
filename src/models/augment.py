@@ -17,29 +17,31 @@ actually varies between recording sessions:
     contraction effort and for electrode-skin impedance, which is the largest
     single source of between-subject variation in sEMG amplitude.
 
-**Why these two are worth their cost.** They are not free: on
-`experiments/architecture_comparison.py` they cost 0.044 of within-subject
-accuracy (0.650 without, 0.606 with). They buy 0.054 of subject-independent
-accuracy (0.216 without, 0.270 with), and the subject-independent number is
-the one this repository leads with. That is the trade augmentation is supposed
-to make, and it is measured rather than assumed.
+**Why these two are worth their cost.** They are not free. On the single
+fold of `experiments/architecture_comparison.py` they cost within-subject
+accuracy and buy subject-independent accuracy and the subject-independent
+number is the one this repository leads with. That is the trade augmentation
+is supposed to make and it is measured rather than assumed. The figures are
+in the README's architecture section, which is generated from
+`experiments/results/db5/architecture_comparison.json` so that this docstring
+does not have to repeat them and go stale.
 
 **What is deliberately not here, and the result is more interesting than
 expected.** Circularly shifting each armband's eight electrodes to simulate a
-rotated band is the obvious third transform. It was tried. It takes
-within-subject accuracy from 0.606 to 0.396, because for one wearer with the
-band in one position, which electrode sees which muscle *is* the signal, and a
-model forced to ignore it has thrown away most of what separates the gestures.
+rotated band is the obvious third transform. It was tried. It collapses
+within-subject accuracy, because for one wearer with the band in one position,
+which electrode sees which muscle *is* the signal and a model forced to
+ignore it has thrown away most of what separates the gestures.
 
-The complication: on the single cross-subject fold measured, it scored 0.297
-against the shipped model's 0.270. The invariance is real, because subjects
-genuinely do wear the band differently. It was still not adopted, for two
-reasons. One fold at +0.027 is inside the fold-to-fold spread of the ten-fold
-run, so that is not evidence yet. And the deployed system is calibrated to its
-wearer, at which point the band's position is fixed and known and a model that
-cannot exploit it is giving up the thing calibration is for. Whether that
-second argument survives being measured is an open question and a good next
-experiment; it has not been run here.
+The complication: on the single cross-subject fold measured, it scored above
+the shipped model. The invariance is real, because subjects genuinely do wear
+the band differently. It was still not adopted, for two reasons. The margin on
+one fold is inside the fold-to-fold spread of the ten-fold run, so that is not
+evidence yet. And the deployed system is calibrated to its wearer, at which
+point the band's position is fixed and known and a model that cannot exploit
+it is giving up the thing calibration is for. Whether that second argument
+survives being measured is an open question and a good next experiment; it
+has not been run here.
 """
 
 from __future__ import annotations

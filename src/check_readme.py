@@ -1,6 +1,6 @@
 """Keep the README honest.
 
-The brief this repository was built to says every quantitative claim in the
+The original plan for this repository says every quantitative claim in the
 README must be reproducible from a script in the repository. Saying so is
 easy. Keeping it true after the fourth retraining run is not, which is why it
 is enforced here rather than promised.
@@ -29,6 +29,7 @@ import argparse
 import json
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 from src.config import Config, load_config, resolve
@@ -165,7 +166,7 @@ def block_per_class(config: Config) -> str:
     )
 
 
-def block_architecture(config: Config) -> str:
+def _architecture_report(config: Config) -> dict:
     report = _read_json(
         resolve("experiments") / "results" / _tag(config) / "architecture_comparison.json"
     )
@@ -174,6 +175,178 @@ def block_architecture(config: Config) -> str:
             "experiments/results/*/architecture_comparison.json is missing. "
             "Run: python -m experiments.architecture_comparison"
         )
+    return report
+
+
+def _shipped_fold_sd(config: Config) -> float | None:
+    """Per-fold accuracy sd of the shipped CNN under leave-one-subject-out.
+
+    The yardstick for a single-fold difference: anything smaller than the
+    spread between folds of the ten-fold run is not evidence on its own.
+    """
+    for row in summary_rows(load_results(config)):
+        if row["model"] == "tensorflow" and row["protocol"] == "subject_independent":
+            return row["fold_sd"]
+    return None
+
+
+def architecture_findings(report: dict, fold_sd: float | None) -> str:
+    """The prose under the architecture table, written from the same JSON.
+
+    Every number and every comparative word (wins, reverses, costs, buys, best)
+    is computed here, so the paragraph cannot say one thing while the table
+    above it says another.
+    """
+    within = {r["variant"]: r for r in report["results"]["within_subject"]}
+    across = {r["variant"]: r for r in report["results"]["subject_independent"]}
+
+    def acc(table: dict, variant: str) -> float:
+        return table[variant]["test_accuracy"]
+
+    def gap(table: dict, variant: str) -> float:
+        return table[variant]["overfit_gap"]
+
+    def f(x: float) -> str:
+        return f"{x:.3f}"
+
+    def inside_spread(diff: float) -> str:
+        if fold_sd is None:
+            return "on one fold, which cannot settle it either way"
+        relation = "inside" if abs(diff) < fold_sd else "outside"
+        return (
+            f"{relation} the per-fold standard deviation of {f(fold_sd)} in the "
+            "ten-fold run of the shipped model"
+        )
+
+    paragraphs = []
+
+    # 1-D against 2-D.
+    w1, w2 = acc(within, "conv1d"), acc(within, "conv2d")
+    a1, a2 = acc(across, "conv1d"), acc(across, "conv2d")
+    g1w, g2w = gap(within, "conv1d"), gap(within, "conv2d")
+    g1a, g2a = gap(across, "conv1d"), gap(across, "conv2d")
+    within_winner = "2-D" if w2 > w1 else "1-D"
+    across_winner = "2-D" if a2 > a1 else "1-D"
+    if within_winner == across_winner:
+        headline = f"The {within_winner} design wins both within and across subjects."
+        across_clause = (
+            f"On the subject neither model saw it wins again, "
+            f"{f(max(a1, a2))} against {f(min(a1, a2))}."
+        )
+    else:
+        headline = (
+            f"Within subject the {within_winner} design wins; across subjects the "
+            f"{across_winner} design does."
+        )
+        across_clause = (
+            f"On the subject neither model saw, the order reverses: {f(a1)} for the "
+            f"1-D model against {f(a2)} for the 2-D."
+        )
+    smaller_within = "smaller" if g2w < g1w else "larger"
+    smaller_across = "smaller" if g2a < g1a else "larger"
+    if smaller_within == smaller_across:
+        gap_summary = f"the 2-D design has the {smaller_within} gap in both protocols"
+    else:
+        gap_summary = (
+            f"the 2-D design has the {smaller_within} gap within subject and the "
+            f"{smaller_across} one across subjects"
+        )
+    case = (
+        "So the case for the 2-D design rests on the within-subject result and on "
+        "the electrode-adjacency argument above, not on cross-subject accuracy, "
+        "where on this fold it is behind."
+        if across_winner == "1-D" and within_winner == "2-D"
+        else "On this fold the comparison points one way in both protocols."
+    )
+    paragraphs.append(
+        f"**{headline}** On held-out repetitions of subjects the models trained on, "
+        f"the shipped 2-D model scores {f(w2)} against {f(w1)} for the 1-D one. "
+        f"{across_clause} The overfitting gap, training accuracy minus test "
+        f"accuracy, follows the same split: {gap_summary} "
+        f"({f(g2w)} against {f(g1w)} within, {f(g2a)} against {f(g1a)} across). "
+        f"{case} The cross-subject difference is {f(abs(a2 - a1))}, "
+        f"{inside_spread(a2 - a1)}."
+    )
+
+    # Augmentation.
+    wn, an = acc(within, "conv2d_noaug"), acc(across, "conv2d_noaug")
+    gnw, gna = gap(within, "conv2d_noaug"), gap(across, "conv2d_noaug")
+    within_verb = "costs" if wn > w2 else "buys"
+    across_verb = "buys" if a2 > an else "costs"
+    narrows = [
+        name
+        for name, with_aug, without in (("within", g2w, gnw), ("across", g2a, gna))
+        if with_aug < without
+    ]
+    if len(narrows) == 2:
+        gap_line = (
+            f"It also narrows the overfitting gap in both protocols ({f(gnw)} without "
+            f"against {f(g2w)} with, within subject; {f(gna)} against {f(g2a)} across)."
+        )
+    elif narrows:
+        gap_line = f"It narrows the overfitting gap {narrows[0]} subjects only."
+    else:
+        gap_line = "It does not narrow the overfitting gap in either protocol."
+    trade = (
+        "That is the trade it is supposed to make and the subject-independent side "
+        "is the one this repository leads with."
+        if within_verb == "costs" and across_verb == "buys"
+        else "That is not the trade it is supposed to make."
+    )
+    paragraphs.append(
+        f"**Augmentation {within_verb} within-subject accuracy and {across_verb} "
+        f"cross-subject accuracy.** {f(wn)} without it against {f(w2)} with and "
+        f"{f(an)} without against {f(a2)} with. {gap_line} {trade}"
+    )
+
+    # Wrapped electrode axis.
+    wc, ac = acc(within, "conv2d_circular"), acc(across, "conv2d_circular")
+    if fold_sd is not None and abs(wc - w2) < fold_sd and abs(ac - a2) < fold_sd:
+        verdict = "is a wash"
+        reason = (
+            "Both differences are inside the per-fold spread, so the extra "
+            "complexity was not kept."
+        )
+    else:
+        verdict = "changes the result"
+        reason = "It was still not kept and it should be re-run over ten folds."
+    paragraphs.append(
+        f"**Wrapping the electrode axis {verdict}.** Treating each ring of eight as "
+        f"periodic gives {f(wc)} against {f(w2)} within subject and {f(ac)} against "
+        f"{f(a2)} across. {reason}"
+    )
+
+    # Electrode rotation.
+    wr, ar = acc(within, "conv2d_electrode_shift"), acc(across, "conv2d_electrode_shift")
+    column_best = max(acc(across, v) for v in across)
+    best_clause = ", the best number in the column," if ar >= column_best else ""
+    paragraphs.append(
+        "**Rotating the electrodes is the interesting negative.** Randomly rotating "
+        "each armband's eight electrodes during training makes the model invariant "
+        "to how the band was put on. It collapses within-subject accuracy to "
+        f"{f(wr)}, because for one wearer with the band in one position, which "
+        "electrode sees which muscle *is* the signal. But on the cross-subject fold "
+        f"it scored {f(ar)}{best_clause} because subjects really do wear the band "
+        f"differently. It was not adopted: one fold at {ar - a2:+.3f} over the "
+        f"shipped model is {inside_spread(ar - a2)} and a deployed system is "
+        "calibrated to its wearer, at which point the band position is fixed and a "
+        "model that cannot use it is giving away what calibration is for. That "
+        "second argument has not been measured and measuring it is the obvious "
+        "next experiment."
+    )
+    return "\n\n".join(_wrap(p) for p in paragraphs)
+
+
+def _wrap(paragraph: str, width: int = 78) -> str:
+    return textwrap.fill(paragraph, width=width, break_on_hyphens=False)
+
+
+def block_architecture_findings(config: Config) -> str:
+    return architecture_findings(_architecture_report(config), _shipped_fold_sd(config))
+
+
+def block_architecture(config: Config) -> str:
+    report = _architecture_report(config)
     labels = {
         "conv1d": "1-D convolution over time",
         "conv2d": "2-D over electrodes and time (shipped)",
@@ -275,38 +448,202 @@ def block_on_target(config: Config) -> str:
             "benchmarks/latency_targets.json is missing. "
             "Run: python -m src.embedded.estimate_report"
         )
+    stride_ms = config.window.stride_ms
     body = []
     for row in report["estimates"]:
         memory = row["memory"]
+        emulated = row.get("emulator")
+        inference = [row["estimated_inference_ms"]]
+        totals = [row["estimated_total_ms"]]
+        if emulated:
+            inference.append(emulated["estimated_inference_ms"])
+            totals.append(emulated["estimated_total_ms"])
+        worst_total, worst_inference = max(totals), max(inference)
         body.append(
             [
                 row["target"],
                 row["runtime"],
                 f"{row['estimated_inference_ms']:.2f}",
-                f"{row['estimated_total_ms']:.1f}",
-                "yes" if row["estimated_to_meet_budget"] else "no",
-                "yes" if memory["fits_flash"] else "no",
+                f"{emulated['estimated_inference_ms']:.2f}" if emulated else "-",
+                f"{worst_total:.1f}",
+                "yes" if worst_total <= row["budget_ms"] else "no",
+                "yes" if worst_inference <= stride_ms else "no",
+                f"{_size(memory['model_kib'])} / {_size(memory['flash_kib'])}"
+                + ("" if memory["fits_flash"] else " (**does not fit**)"),
+                f"{_size(memory['ram_needed_kib'])} / {_size(memory['ram_kib'])}"
+                + ("" if memory["fits_ram"] else " (**does not fit**)"),
             ]
         )
     return (
-        "**Estimates, not measurements.** No STM32 or Jetson was available for\n"
-        "this work. Every row below is arithmetic from the model's\n"
-        f"{report['artefact']['macs']:,} multiply-accumulates and a documented\n"
-        "throughput assumption per board; see `src/embedded/estimate.py` for the\n"
-        "assumptions and `benchmarks/README.md` for how to replace a row with a\n"
-        "real measurement.\n\n"
+        "**Estimates, not measurements.** No STM32 or Jetson board was used for\n"
+        "this work. The arithmetic column is the model's\n"
+        f"{report['artefact']['macs']:,} multiply-accumulates over a documented\n"
+        "throughput assumption per board (`src/embedded/estimate.py`). The Renode\n"
+        "column is the emulator's cycle count for the same int8 model running in\n"
+        "TensorFlow Lite Micro with CMSIS-NN on an emulated Cortex-M4F, divided by\n"
+        "the 100 MHz clock; the emulator retires one instruction per cycle, so it\n"
+        "is an estimate too. The total uses whichever estimate is slower.\n"
+        f"\"Keeps up\" means one inference fits inside the {stride_ms:.0f} ms stride.\n"
+        "RAM needed is what the linker placed in RAM for the\n"
+        "emulated build (statics, tensor arena, heap and stack), which is exact for\n"
+        "that build; the weights are not in it, because TensorFlow Lite Micro reads\n"
+        "them from flash.\n\n"
         + _markdown_table(
             [
                 "Target",
                 "Runtime",
-                "Est. inference (ms)",
+                "Inference, arithmetic (ms)",
+                "Inference, Renode (ms)",
                 "Est. total (ms)",
                 "Inside budget?",
-                "Fits flash?",
+                "Keeps up?",
+                "Flash: model / available",
+                "RAM: needed / available",
             ],
             body,
         )
     )
+
+
+def _size(kib: float) -> str:
+    """A memory size in the unit a datasheet would use."""
+    if kib >= 1024 * 1024:
+        return f"{kib / (1024 * 1024):.0f} GiB"
+    if kib >= 1024:
+        return f"{kib / 1024:.0f} MiB"
+    return f"{kib:.0f} KiB" if kib >= 100 else f"{kib:.1f} KiB"
+
+
+def block_emulator(config: Config) -> str:
+    report = _read_json(resolve("benchmarks") / "renode_cortex_m4.json")
+    if report is None:
+        raise FileNotFoundError(
+            "benchmarks/renode_cortex_m4.json is missing. "
+            "Run: bash firmware/scripts/build_and_run.sh in the firmware image"
+        )
+    memory, cycles, outputs = report["memory"], report["cycles"], report["outputs"]
+    toolchain = report["toolchain"]
+    clock = report["target"]["clock_mhz"]
+    match = (
+        f"{outputs['bit_exact']} of {outputs['compared']} bit-exact"
+        if outputs["bit_exact"] == outputs["compared"]
+        else f"{outputs['compared'] - len(outputs['mismatched_windows'])} of "
+        f"{outputs['compared']} within {outputs['tolerance_lsb']} LSB "
+        f"({outputs['bit_exact']} bit-exact)"
+    )
+    body = [
+        [
+            "Outputs against the desktop interpreter",
+            f"{match}; top class agrees on {outputs['top_class_agrees']}",
+            "checked on every CI run",
+        ],
+        [
+            "Cycles per inference",
+            f"{cycles['mean']:,.0f}"
+            + (
+                ", identical for every window"
+                if cycles["min"] == cycles["max"]
+                else f" (range {cycles['min']:,} to {cycles['max']:,})"
+            ),
+            "**emulator estimate**",
+        ],
+        [
+            f"Inference at {clock:.0f} MHz",
+            f"{cycles['estimated_inference_ms_at_clock']:.2f} ms",
+            "**emulator estimate**",
+        ],
+        [
+            "Flash used",
+            f"{memory['flash_used_bytes'] / 1024:.1f} of {memory['flash_bytes'] // 1024} KiB",
+            "exact for this build",
+        ],
+        [
+            "RAM used",
+            f"{memory['ram_used_bytes'] / 1024:.1f} of {memory['ram_bytes'] // 1024} KiB",
+            "exact for this build",
+        ],
+        [
+            "Tensor arena",
+            f"{memory['arena_used_bytes']:,} bytes used of "
+            f"{memory['arena_reserved_bytes']:,} reserved",
+            "reported by the TFLite Micro allocator",
+        ],
+    ]
+    provenance = _wrap(
+        f"Built with {toolchain['compiler']} and CMake, TensorFlow Lite Micro "
+        f"at commit `{toolchain['tflite_micro_commit'][:7]}` with CMSIS-NN "
+        f"kernels and run under {toolchain['emulator']}. Reference: "
+        f"{outputs['reference']}."
+    )
+    return (
+        _markdown_table(["Quantity", "Value", "Kind"], body)
+        + "\n\n"
+        + provenance
+        + "\n\n"
+        + _emulator_verdict(config, report)
+    )
+
+
+def _emulator_verdict(config: Config, emulator: dict) -> str:
+    """What the emulated run says about the part, in words computed from the data."""
+    targets = _read_json(resolve("benchmarks") / "latency_targets.json")
+    if targets is None:
+        raise FileNotFoundError("benchmarks/latency_targets.json is missing")
+    m4 = next(r for r in targets["estimates"] if "emulator" in r)
+    emulated = m4["emulator"]
+    stride = config.window.stride_ms
+    inference = emulated["estimated_inference_ms"]
+    total = emulated["estimated_total_ms"]
+    arithmetic = m4["estimated_inference_ms"]
+    memory = emulator["memory"]
+    all_tensors_kib = targets["artefact"]["all_tensors_bytes"] / 1024
+
+    keeps_up = inference <= stride
+    meets = emulated["estimated_to_meet_budget"]
+    ratio = inference / arithmetic
+    direction = "optimistic" if ratio > 1 else "pessimistic"
+    timing = (
+        f"At {m4['clock_mhz']:.0f} MHz the emulated part needs {inference:.1f} ms per "
+        f"inference, which {'fits inside' if keeps_up else 'is longer than'} the "
+        f"{stride:.0f} ms stride and the end-to-end total comes to {total:.1f} ms "
+        f"against the {m4['budget_ms']:.0f} ms budget, which it "
+        f"{'meets' if meets else 'misses'}. A Cortex-M4 issues at most one "
+        "instruction per cycle, so a real board will not beat this count and "
+        "flash wait states will make it slower. The arithmetic estimate of "
+        f"{arithmetic:.1f} ms was {direction} by a factor of {max(ratio, 1 / ratio):.1f}."
+    )
+    fits = memory["fits_ram"] and memory["fits_flash"]
+    space = (
+        f"Memory is {'not' if fits else ''} the problem: the build uses "
+        f"{memory['ram_used_bytes'] / 1024:.1f} KiB of the STM32F411's "
+        f"{memory['ram_bytes'] // 1024} KiB of RAM and "
+        f"{memory['flash_used_bytes'] / 1024:.0f} KiB of its "
+        f"{memory['flash_bytes'] // 1024} KiB of flash. An earlier version of this "
+        f"table compared the RAM with {all_tensors_kib:.0f} KiB, the sum of every "
+        "tensor in the graph, which counts the weights (they stay in flash) and "
+        "counts every activation as live at once (the allocator reuses them)."
+    ).replace("is  the", "is the")
+    h7 = next((r for r in targets["estimates"] if r["target"].startswith("STM32H743")), None)
+    if fits and not (keeps_up and meets) and h7 is not None:
+        scaled = h7["estimated_inference_ms"] * max(ratio, 1.0)
+        h7_ok = scaled <= stride and h7["memory"]["fits_ram"] and h7["memory"]["fits_flash"]
+        choice = (
+            "So the STM32F411 holds this model and does not run it fast enough. "
+            "The STM32H743 in the table above is the part to choose: the same "
+            "build fits its memory with room to spare and its arithmetic "
+            f"estimate of {h7['estimated_inference_ms']:.1f} ms, scaled by the "
+            f"same factor of {max(ratio, 1.0):.1f}, is {scaled:.1f} ms, which "
+            f"{'still fits inside' if h7_ok else 'does not fit inside'} the "
+            f"{stride:.0f} ms stride. That is arithmetic, not emulation, so it is "
+            "the part to put on a bench first, not a settled answer."
+        )
+    elif fits and not (keeps_up and meets):
+        choice = "So the STM32F411 holds this model and does not run it fast enough."
+    elif fits:
+        choice = "On this evidence the STM32F411 is sufficient, pending a board."
+    else:
+        choice = "The STM32F411 does not hold this build; a larger part is needed."
+    return "\n\n".join(_wrap(p) for p in (timing, space, choice))
 
 
 def block_control_loop(config: Config) -> str:
@@ -427,9 +764,11 @@ BUILDERS = {
     "gap": block_gap,
     "per_class": block_per_class,
     "architecture": block_architecture,
+    "architecture_findings": block_architecture_findings,
     "quantisation": block_quantisation,
     "latency_budget": block_latency_budget,
     "on_target": block_on_target,
+    "emulator": block_emulator,
     "control_loop": block_control_loop,
     "geometry": block_geometry,
 }
@@ -491,7 +830,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.write:
         if changed:
-            path.write_text(new_text, encoding="utf-8")
+            path.write_text(new_text, encoding="utf-8", newline="\n")
             print(f"regenerated: {', '.join(changed)}")
         else:
             print("already up to date")

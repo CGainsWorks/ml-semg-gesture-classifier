@@ -1,7 +1,7 @@
 """Fit the classifier to a new wearer from their own demonstrations.
 
 This is the fitting appointment, as a command. It is also this project's
-answer to the brief's "learning by demonstration", and it is worth being
+answer to "learning by demonstration" in the original plan and it is worth being
 precise about what that phrase does and does not mean here.
 
 **What this is.** The new wearer performs each gesture once. Those recordings
@@ -14,8 +14,8 @@ actually personalised.
 **What this is not.** It is not imitation learning in the reinforcement
 learning sense: no policy is cloned, there is no expert trajectory over
 states and actions, and there is no environment. That would need an arm to
-imitate and this repository has no arm. The brief lists imitation learning in
-its target stack; this is the part of it that applies to a classifier, and the
+imitate and this repository has no arm. The original plan lists imitation
+learning in its target stack; this is the part of it that applies to a classifier and the
 part that does not is out of scope rather than quietly relabelled.
 
 Usage:
@@ -256,7 +256,7 @@ def run(
 
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / f"calibration_s{subject:02d}.json").write_text(
-        json.dumps(report, indent=2), encoding="utf-8"
+        json.dumps(report, indent=2), encoding="utf-8", newline="\n"
     )
 
     if export:

@@ -213,10 +213,11 @@ once in each framework, from a single shared `ArchitectureSpec`, with tests
 asserting the two agree on parameter count and input shape.
 
 The obvious design is a 1-D convolution along time with the sixteen electrodes
-as input channels. That was built first and it is worse, because the
-electrodes are not an unordered feature vector: they are two rings of eight
-around the forearm, and adjacent electrodes see overlapping muscles. Making
-them adjacent to the model as well is the difference:
+as input channels. That was built first. The 2-D design replaced it because
+the electrodes are not an unordered feature vector: they are two rings of
+eight around the forearm and adjacent electrodes see overlapping muscles, so
+making them adjacent to the model as well is a sensible inductive bias. The
+measurement supports that within subject and not across subjects:
 
 <!-- BEGIN:architecture -->
 | Variant | Within-subject | Subject-independent | Parameters |
@@ -228,30 +229,49 @@ them adjacent to the model as well is the difference:
 | 2-D, plus random electrode rotation | 0.435 | 0.292 | 177,490 |
 <!-- END:architecture -->
 
-Read that table honestly and it says three things.
+Every variant below was trained and tested on one fold per protocol, so read
+the differences against the fold-to-fold spread. The paragraphs that follow
+are generated from the same JSON as the table, comparative words included
+and CI fails if either drifts from it.
 
-**The 2-D design wins within subject and ties across subjects.** 0.606 against
-0.535 on one held-out subject's own repetitions, and 0.270 against 0.269 on a
-subject the model never saw. The second pair is a tie and is reported as one.
-What settles it is the overfitting gap, which the 2-D design nearly halves
-(0.167 against 0.296), and the ten-fold numbers in the results table above.
+<!-- BEGIN:architecture_findings -->
+**Within subject the 2-D design wins; across subjects the 1-D design does.**
+On held-out repetitions of subjects the models trained on, the shipped 2-D
+model scores 0.597 against 0.537 for the 1-D one. On the subject neither model
+saw, the order reverses: 0.284 for the 1-D model against 0.261 for the 2-D.
+The overfitting gap, training accuracy minus test accuracy, follows the same
+split: the 2-D design has the smaller gap within subject and the larger one
+across subjects (0.227 against 0.325 within, 0.465 against 0.395 across). So
+the case for the 2-D design rests on the within-subject result and on the
+electrode-adjacency argument above, not on cross-subject accuracy, where on
+this fold it is behind. The cross-subject difference is 0.023, inside the
+per-fold standard deviation of 0.072 in the ten-fold run of the shipped model.
 
 **Augmentation costs within-subject accuracy and buys cross-subject
-accuracy.** 0.650 without it against 0.606 with, and 0.216 without against
-0.270 with. That is the trade it is supposed to make, and the
-subject-independent side is the one this repository leads with.
+accuracy.** 0.641 without it against 0.597 with and 0.241 without against
+0.261 with. It also narrows the overfitting gap in both protocols (0.246
+without against 0.227 with, within subject; 0.523 against 0.465 across). That
+is the trade it is supposed to make and the subject-independent side is the
+one this repository leads with.
+
+**Wrapping the electrode axis is a wash.** Treating each ring of eight as
+periodic gives 0.606 against 0.597 within subject and 0.243 against 0.261
+across. Both differences are inside the per-fold spread, so the extra
+complexity was not kept.
 
 **Rotating the electrodes is the interesting negative.** Randomly rotating
 each armband's eight electrodes during training makes the model invariant to
-how the band was put on. It collapses within-subject accuracy to 0.396,
+how the band was put on. It collapses within-subject accuracy to 0.435,
 because for one wearer with the band in one position, which electrode sees
-which muscle *is* the signal. But on the cross-subject fold it scored 0.297,
+which muscle *is* the signal. But on the cross-subject fold it scored 0.292,
 the best number in the column, because subjects really do wear the band
-differently. It was not adopted: one fold at +0.027 is inside the spread of
-the ten-fold run, and a deployed system is calibrated to its wearer, at which
+differently. It was not adopted: one fold at +0.030 over the shipped model is
+inside the per-fold standard deviation of 0.072 in the ten-fold run of the
+shipped model and a deployed system is calibrated to its wearer, at which
 point the band position is fixed and a model that cannot use it is giving away
-what calibration is for. That second argument has not been measured, and
+what calibration is for. That second argument has not been measured and
 measuring it is the obvious next experiment.
+<!-- END:architecture_findings -->
 
 Reproduce with `python -m experiments.architecture_comparison`.
 
@@ -311,8 +331,8 @@ command loads the shipped model, which was trained on every subject including
 this one, and the "before" number is optimistic. The report says which mode
 produced it.
 
-This is the part of the brief's "imitation learning and learning by
-demonstration" that applies to a classifier: supervised learning from
+This is the part of "imitation learning and learning by demonstration" from
+the original plan that applies to a classifier: supervised learning from
 demonstrated examples. It is not policy cloning over state-action
 trajectories, because there is no arm here to imitate, and calling it that
 would be relabelling rather than building it.
@@ -351,8 +371,9 @@ themselves. The figure comes from Englehart and Hudgins (2003) and Farrell and
 Weir (2007); the reasoning is in
 [`docs/LATENCY_BUDGET.md`](docs/LATENCY_BUDGET.md).
 
-**The model is not the problem.** Inference is a rounding error next to the
-time the window takes to fill:
+**On a desktop the model is not the problem.** Inference is a rounding error
+next to the time the window takes to fill. On a 100 MHz microcontroller it is
+a different story, which the on-target section below takes up.
 
 <!-- BEGIN:latency_budget -->
 | Term | Milliseconds | Provenance |
@@ -434,31 +455,86 @@ Reproduce with `python -m experiments.latency_accuracy_tradeoff`.
 ### On target hardware
 
 <!-- BEGIN:on_target -->
-**Estimates, not measurements.** No STM32 or Jetson was available for
-this work. Every row below is arithmetic from the model's
-7,764,224 multiply-accumulates and a documented
-throughput assumption per board; see `src/embedded/estimate.py` for the
-assumptions and `benchmarks/README.md` for how to replace a row with a
-real measurement.
+**Estimates, not measurements.** No STM32 or Jetson board was used for
+this work. The arithmetic column is the model's
+7,764,224 multiply-accumulates over a documented
+throughput assumption per board (`src/embedded/estimate.py`). The Renode
+column is the emulator's cycle count for the same int8 model running in
+TensorFlow Lite Micro with CMSIS-NN on an emulated Cortex-M4F, divided by
+the 100 MHz clock; the emulator retires one instruction per cycle, so it
+is an estimate too. The total uses whichever estimate is slower.
+"Keeps up" means one inference fits inside the 50 ms stride.
+RAM needed is what the linker placed in RAM for the
+emulated build (statics, tensor arena, heap and stack), which is exact for
+that build; the weights are not in it, because TensorFlow Lite Micro reads
+them from flash.
 
-| Target | Runtime | Est. inference (ms) | Est. total (ms) | Inside budget? | Fits flash? |
-| --- | --- | --- | --- | --- | --- |
-| STM32F411 (Cortex-M4F, 100 MHz) | TFLite Micro + CMSIS-NN | 83.19 | 303.2 | no | yes |
-| STM32H743 (Cortex-M7, 480 MHz) | TFLite Micro + CMSIS-NN | 12.58 | 232.6 | yes | yes |
-| Jetson Nano (Cortex-A57, 1.43 GHz, CPU only) | ONNX Runtime, one thread | 1.18 | 221.2 | yes | yes |
+| Target | Runtime | Inference, arithmetic (ms) | Inference, Renode (ms) | Est. total (ms) | Inside budget? | Keeps up? | Flash: model / available | RAM: needed / available |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| STM32F411 (Cortex-M4F, 100 MHz) | TFLite Micro + CMSIS-NN | 83.19 | 157.72 | 377.7 | no | no | 186 KiB / 512 KiB | 52.9 KiB / 128 KiB |
+| STM32H743 (Cortex-M7, 480 MHz) | TFLite Micro + CMSIS-NN | 12.58 | - | 232.6 | yes | yes | 186 KiB / 2 MiB | 52.9 KiB / 1 MiB |
+| Jetson Nano (Cortex-A57, 1.43 GHz, CPU only) | ONNX Runtime, one thread | 1.18 | - | 221.2 | yes | yes | 186 KiB / 16 GiB | 52.9 KiB / 4 GiB |
 <!-- END:on_target -->
 
-The estimate is useful even though it is an estimate, because it changes an
-answer: a 100 MHz Cortex-M4 does **not** fit, missing the 300 ms budget by a
-few milliseconds on inference alone, while a 480 MHz Cortex-M7 has ample room.
-That is a part-selection decision falling out of arithmetic anyone can check,
-and it is the kind of thing worth knowing before ordering hardware rather than
-after. Being an estimate, it should be treated as "the M4 is marginal, measure
-it" rather than "the M4 is ruled out".
+### On an emulated Cortex-M4
 
-[`benchmarks/README.md`](benchmarks/README.md) has the instructions for
-producing a real measurement on a board, and the porting notes for TFLite
-Micro on a Cortex-M.
+The arithmetic above is now backed by a run. `firmware/` embeds the int8
+model in a bare-metal program built on TensorFlow Lite Micro with the CMSIS-NN
+kernels, cross-compiled with the Arm GNU Toolchain and CMake and linked
+against the STM32F411 memory map, so the link fails if it does not fit. CI runs
+it under Renode on an emulated Cortex-M4F with the same flash and RAM sizes,
+feeds it a fixed set of int8 windows and compares every int8 output with the
+desktop TFLite interpreter's, failing on any difference. Everything is pinned
+in [`docker/firmware.Dockerfile`](docker/firmware.Dockerfile); `make firmware`
+runs the same thing locally.
+
+The firmware's model has the shipped architecture (same operators, tensor
+shapes, size and MAC count, which a test asserts) with weights trained on the
+synthetic generator, so the committed binary carries nothing derived from the
+research-use dataset. Memory and cycles depend on the architecture, not the
+weights.
+
+<!-- BEGIN:emulator -->
+| Quantity | Value | Kind |
+| --- | --- | --- |
+| Outputs against the desktop interpreter | 36 of 36 bit-exact; top class agrees on 36 | checked on every CI run |
+| Cycles per inference | 15,772,392, identical for every window | **emulator estimate** |
+| Inference at 100 MHz | 157.72 ms | **emulator estimate** |
+| Flash used | 287.1 of 512 KiB | exact for this build |
+| RAM used | 52.9 of 128 KiB | exact for this build |
+| Tensor arena | 29,716 bytes used of 40,960 reserved | reported by the TFLite Micro allocator |
+
+Built with arm-none-eabi-gcc (Arm GNU Toolchain 14.2.Rel1 (Build arm-14.52))
+14.2.1 20241119 and CMake, TensorFlow Lite Micro at commit `f59d987` with
+CMSIS-NN kernels and run under Renode v1.16.1.16973. Reference: TFLite
+interpreter, tensorflow 2.18.1, BUILTIN_REF (reference kernels).
+
+At 100 MHz the emulated part needs 157.7 ms per inference, which is longer
+than the 50 ms stride and the end-to-end total comes to 377.7 ms against the
+300 ms budget, which it misses. A Cortex-M4 issues at most one instruction per
+cycle, so a real board will not beat this count and flash wait states will
+make it slower. The arithmetic estimate of 83.2 ms was optimistic by a factor
+of 1.9.
+
+Memory is not the problem: the build uses 52.9 KiB of the STM32F411's 128 KiB
+of RAM and 287 KiB of its 512 KiB of flash. An earlier version of this table
+compared the RAM with 217 KiB, the sum of every tensor in the graph, which
+counts the weights (they stay in flash) and counts every activation as live at
+once (the allocator reuses them).
+
+So the STM32F411 holds this model and does not run it fast enough. The
+STM32H743 in the table above is the part to choose: the same build fits its
+memory with room to spare and its arithmetic estimate of 12.6 ms, scaled by
+the same factor of 1.9, is 23.9 ms, which still fits inside the 50 ms stride.
+That is arithmetic, not emulation, so it is the part to put on a bench first,
+not a settled answer.
+<!-- END:emulator -->
+
+What is still missing is a board. Renode does not model pipeline stalls,
+multi-cycle instructions or flash wait states and nothing here has run on
+silicon. [`benchmarks/README.md`](benchmarks/README.md) says what the emulated
+run does and does not establish and lists the steps to move the firmware to
+a real STM32F411.
 
 ---
 
@@ -509,8 +585,9 @@ rate is the one that says whether the arm would behave.
 | `make evaluate` | Figures, tables and `analysis/db5/EVALUATION.md`. |
 | `make experiments` | The architecture and latency ablations. |
 | `make demo` | All of the above, from nothing. |
-| `make test` | The test suite. |
+| `make test` | The test suite, 201 tests. |
 | `make docker-test` | The test suite inside the container, rebuilding it first. |
+| `make firmware` | Cross-build the Cortex-M firmware and run it under Renode, in its own container. |
 
 Every number on this page sits between markers and is regenerated from
 committed JSON by `python -m src.check_readme --write`. CI runs
@@ -547,9 +624,11 @@ not the same thing as a person completing a task. Users adapt to a
 controller's errors, and a controller with worse offline accuracy can be
 better to use. Measuring that needs users and hardware.
 
-**On-target latency is estimated, not measured.** No STM32 and no Jetson was
-available. Every estimate is labelled as one and the assumptions behind it are
-written down.
+**On-target latency is estimated, not measured.** No STM32 and no Jetson
+board was used. The Cortex-M4 figure comes from an emulator, which counts
+instructions rather than cycles and the rest is arithmetic. Every estimate is
+labelled as one and the assumptions behind it are written down. The
+emulated firmware's outputs and memory figures are exact; its timing is not.
 
 **No hardware in this repository at all.** No acquisition board, no
 electrodes, no arm. The 20 ms input/output allowance in the latency budget is
@@ -588,8 +667,31 @@ not comparable and should not be read as a framework benchmark.
 | [`docs/EVALUATION_PROTOCOL.md`](docs/EVALUATION_PROTOCOL.md) | The three protocols and every anti-leakage rule |
 | [`docs/LATENCY_BUDGET.md`](docs/LATENCY_BUDGET.md) | Where 300 ms comes from and what is in the budget |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How the code is laid out and why |
-| [`benchmarks/README.md`](benchmarks/README.md) | Measured against estimated, and how to benchmark a real board |
+| [`benchmarks/README.md`](benchmarks/README.md) | Measured, emulated and estimated and how to benchmark a real board |
+| [`STATUS.md`](STATUS.md) | What is done, what is not and what needs hardware |
 | [`analysis/db5/EVALUATION.md`](analysis/db5/EVALUATION.md) | Generated full evaluation report |
+
+---
+
+## Where this fits
+
+The decisions this classifier makes are consumed by
+[`emb-neurotech-prosthetic-arm`](https://github.com/CGainsWorks/emb-neurotech-prosthetic-arm),
+the acquisition board and arm on either side of it. That repository's
+[`docs/INTEGRATION.md`](https://github.com/CGainsWorks/emb-neurotech-prosthetic-arm/blob/main/docs/INTEGRATION.md)
+is the contract: one decision every 50 ms from a 200 ms window, published as
+`arm_msgs/GestureCommand` with the Ninapro DB5 exercise B class (0 to 17), its
+confidence, a validity flag and the inference latency and a table of what the
+arm does with each class. It also lists where the two do not yet fit together,
+the largest being that its board has eight channels and this model takes
+sixteen.
+
+Nothing in this repository publishes `GestureCommand` yet. The streaming
+controller in `src/embedded/control_loop.py` already produces a class, its
+softmax confidence and the inference time for every decision, which is most of
+what the message carries; the validity flag (for a lifted electrode, say) does
+not exist here and the publisher has not been written. The two repositories
+have never run together.
 
 ---
 
