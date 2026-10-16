@@ -274,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
         else resolve("experiments") / "results" / tag / "latency_accuracy_tradeoff.json"
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    out.write_text(json.dumps(report, indent=2), encoding="utf-8", newline="\n")
 
     best = report["best_within_budget"]
     if best:

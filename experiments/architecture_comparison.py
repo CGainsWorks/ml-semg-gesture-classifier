@@ -331,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         else resolve("experiments") / "results" / tag / "architecture_comparison.json"
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    out.write_text(json.dumps(report, indent=2), encoding="utf-8", newline="\n")
     print(f"written to {out}")
     return 0
 

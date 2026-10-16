@@ -359,7 +359,7 @@ def write_report(config: Config, results: list[dict], rows: list[dict]) -> Path:
 
     out = analysis_dir(config) / "EVALUATION.md"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     return out
 
 
@@ -384,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     summary_path = analysis_dir(config) / "summary.json"
     summary_path.parent.mkdir(parents=True, exist_ok=True)
-    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8", newline="\n")
 
     if not args.no_figures:
         written = write_figures(config, results, rows)

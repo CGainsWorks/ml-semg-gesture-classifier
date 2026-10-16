@@ -120,7 +120,7 @@ def train_deployment_model(
         "training": info,
     }
     (out / f"{model}_manifest.json").write_text(
-        json.dumps(manifest, indent=2), encoding="utf-8"
+        json.dumps(manifest, indent=2), encoding="utf-8", newline="\n"
     )
     if verbose:
         print(f"deployment artefacts written to {out}")

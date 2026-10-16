@@ -198,7 +198,7 @@ class Config:
     def save(self, path: str | Path) -> None:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
+        path.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8", newline="\n")
 
 
 _SECTIONS = {
@@ -247,6 +247,21 @@ def resolve(path: str | Path) -> Path:
     """Resolve a config-relative path against the repository root."""
     p = Path(path)
     return p if p.is_absolute() else REPO_ROOT / p
+
+
+def portable_path(path: str | Path) -> str:
+    """A repository-relative POSIX path, for a file that will be read elsewhere.
+
+    Result files are committed and read back on other machines, including by
+    CI on Linux. An absolute Windows path in there is both machine-specific and
+    unparseable by ``pathlib`` on a POSIX host, where it comes out as one long
+    filename and any lookup by basename silently misses.
+    """
+    try:
+        return resolve(path).resolve().relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        # Outside the repository: keep the name, drop the machine-specific part.
+        return Path(path).name
 
 
 _SOURCE_FINGERPRINT: str | None = None

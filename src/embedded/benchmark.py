@@ -32,23 +32,8 @@ from pathlib import Path
 
 import numpy as np
 
-from src.config import REPO_ROOT, Config, load_config, resolve
+from src.config import Config, load_config, portable_path, resolve
 from src.embedded.runtime import InferenceRuntime, load_runtime
-
-
-def portable_path(path: Path) -> str:
-    """A repository-relative POSIX path, for a file that will be read elsewhere.
-
-    These files are committed and read back on other machines, including by CI
-    on Linux. An absolute Windows path in there is both machine-specific and
-    unparseable by ``pathlib`` on a POSIX host, where it comes out as one long
-    filename and any lookup by basename silently misses.
-    """
-    try:
-        return path.resolve().relative_to(REPO_ROOT).as_posix()
-    except ValueError:
-        # Outside the repository: keep the name, drop the machine-specific part.
-        return path.name
 
 
 @dataclass
@@ -239,6 +224,7 @@ def main(argv: list[str] | None = None) -> int:
             indent=2,
         ),
         encoding="utf-8",
+        newline="\n",
     )
     print(f"written to {out}")
     return 0

@@ -315,7 +315,7 @@ def main(argv: list[str] | None = None) -> int:
         else resolve("benchmarks") / f"control_loop_{tag}.json"
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    out.write_text(json.dumps(report, indent=2), encoding="utf-8", newline="\n")
 
     latency = report["latency"]
     print(

@@ -162,7 +162,7 @@ def run(config: Config, limit: int = 512, evaluate: bool = True) -> dict[str, ob
     tag = "synthetic" if config.dataset.source == "synthetic" else "db5"
     report_path = resolve("results") / tag / "export_report.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8", newline="\n")
     print(f"report written to {report_path}")
     return report
 

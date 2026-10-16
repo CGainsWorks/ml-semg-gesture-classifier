@@ -21,6 +21,7 @@ import torch
 from onnxruntime.quantization import CalibrationDataReader, QuantFormat, QuantType, quantize_static
 from onnxruntime.quantization.shape_inference import quant_pre_process
 
+from src.config import portable_path
 from src.models.torch_cnn import TorchGestureCNN
 
 OPSET = 17
@@ -119,7 +120,7 @@ def describe(path: str | Path) -> dict[str, object]:
     for node in model.graph.node:
         ops[node.op_type] = ops.get(node.op_type, 0) + 1
     return {
-        "path": str(path),
+        "path": portable_path(path),
         "bytes": Path(path).stat().st_size,
         "opset": max(o.version for o in model.opset_import),
         "operators": dict(sorted(ops.items())),

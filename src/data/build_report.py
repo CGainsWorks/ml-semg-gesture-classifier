@@ -117,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
     if not out.is_absolute():
         out = resolve(out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(stats, indent=2), encoding="utf-8")
+    out.write_text(json.dumps(stats, indent=2), encoding="utf-8", newline="\n")
 
     print(f"source            {stats['source']} exercise {stats['exercise']}")
     print(f"subjects          {len(stats['subjects'])}")
